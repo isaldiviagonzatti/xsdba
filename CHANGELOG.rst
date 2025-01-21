@@ -9,12 +9,12 @@ Contributors: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`
 
 Changes
 ^^^^^^^
-* Added daily `upstream` testing to the CI pipeline.
+* Added daily `upstream` testing to the CI pipeline. (:pull:`61`).
 
 Fixes
 ^^^^^
-* Gave credits to the package to all previous contributors of ``xclim.sdba`` (:issue:`58`, :pull:`59`).
-* Pin `sphinx-codeautolink` to fix ReadTheDocs and correct some docs errors (:pull:`40`).
+* Gave credits to the package to all previous contributors of ``xclim.sdba``. (:issue:`58`, :pull:`59`).
+* Pin `sphinx-codeautolink` to fix ReadTheDocs and correct some docs errors. (:pull:`40`).
 
 .. _changes_0.2.0:
 
@@ -28,7 +28,7 @@ Changes
 * Split `sdba` from `xclim` into its own standalone package. Where needed, some common functionalities were duplicated: (:pull:`8`)
     * ``xsdba.units`` is an adaptation of the ``xclim.core.units`` modules.
     * Many functions and definitions found in ``xclim.core.calendar`` have been adapted to ``xsdba.base``.
-* Dependencies have been updated to reflect the new package structure. (:pull:`45`)
+* Dependencies have been updated to reflect the new package structure. (:pull:`45`).
 * Updated documentation configuration: (:pull:`46`)
     * Significant improvements to the documentation content and layout.
     * Now using the `furo` theme for `sphinx`.
