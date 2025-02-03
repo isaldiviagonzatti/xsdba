@@ -21,7 +21,9 @@ from xsdba.testing.utils import (
     gather_testing_data,
 )
 from xsdba.testing.utils import gosset as _gosset
-from xsdba.testing.utils import testing_setup_warnings
+from xsdba.testing.utils import (
+    testing_setup_warnings,
+)
 from xsdba.utils import apply_correction
 
 
