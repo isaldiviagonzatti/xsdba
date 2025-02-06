@@ -11,13 +11,11 @@ dependencies:
 - jupyter_client
 - nbsphinx >=0.9.5
 - nc-time-axis >=1.4.1
-- pandoc
 - pooch >=1.8.0
-- pygments
-- sphinx >=7.0.0
+- sphinx >=7.1.0
 - sphinx-autobuild >=2024.4.16
 - sphinx-autodoc-typehints
-- sphinx-codeautolink >=0.16.1
+- sphinx-codeautolink >=0.16.2
 - sphinx-copybutton
 - sphinx-intl
 - sphinx-mdinclude
