@@ -106,7 +106,7 @@ jobs:
         if: success()
         id: status
         run: |
-          python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing --report-log output-${{ matrix.python-version }}-log.jsonl
+          python -m pytest --numprocesses=logical --durations=10 --cov=xsdba --cov-report=term-missing --report-log output-${{ matrix.python-version }}-log.jsonl
       - name: Generate and publish the report
         if: |
           failure()
