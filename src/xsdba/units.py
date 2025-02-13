@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import inspect
 from functools import wraps
-from typing import Any, cast
+from typing import cast
 
 # this dependency is "necessary" for convert_units_to and all unit printing (which use the CF formatter)
 # if we only do checks, we could get rid of it
@@ -26,7 +26,6 @@ __all__ = [
     "pint2cfattrs",
     "pint_multiply",
     "str2pint",
-    "to_agg_units",
     "units",
     "units2pint",
     "units2str",
@@ -325,7 +324,7 @@ def convert_units_to(  # noqa: C901
             out = source.copy(data=units.convert(source.data, source_unit, target_unit))
             out = out.assign_attrs(units=target_unit)
         else:  # scalar
-            # explicit float cast because cf-xarray's registry ouputs 0-dim arrays
+            # explicit float cast because cf-xarray registry outputting 0-dim arrays
             out = float(str2pint(source).to(target_unit).m)
         return out
 
