@@ -97,3 +97,4 @@ jobs:
         with:
           force: false
           branch: ${{ github.ref }}
+          github_token: ${{ steps.token_generator.outputs.token }}
