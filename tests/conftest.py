@@ -1,6 +1,7 @@
 # noqa: D104
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 
 import numpy as np
@@ -59,7 +60,7 @@ def ref_hist_sim_tuto():  # noqa: F841
     """
 
     def _ref_hist_sim_tuto(sim_offset=3, delta=0.1, smth_win=3, trend=True):
-        ds = xr.tutorial.open_dataset("air_temperature")
+        ds = xr.tutorial.open_dataset("air_temperature", engine="h5netcdf")
         ref = ds.air.resample(time="D").mean(keep_attrs=True)
         hist = ref.rolling(time=smth_win, min_periods=1).mean(keep_attrs=True) + delta
         hist.attrs["units"] = ref.attrs["units"]
@@ -159,7 +160,7 @@ def gosset(threadsafe_data_dir, worker_id):
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir) -> Path:
+def tmp_netcdf_filename(tmpdir) -> Generator:
     yield Path(tmpdir).joinpath("testfile.nc")
 
 

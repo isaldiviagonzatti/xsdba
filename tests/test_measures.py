@@ -19,7 +19,9 @@ def test_bias(gosset):
         .tasmax
     )
     test = measures.bias(sim, ref).values
-    np.testing.assert_array_almost_equal(test, [[6.430237, 39.088974, 5.2402344]])
+    np.testing.assert_array_almost_equal(
+        test, np.array([[6.430237, 39.088974, 5.2402344]])
+    )
 
 
 def test_relative_bias(gosset):
@@ -34,7 +36,9 @@ def test_relative_bias(gosset):
         .tasmax
     )
     test = measures.relative_bias(sim, ref).values
-    np.testing.assert_array_almost_equal(test, [[0.02366494, 0.16392256, 0.01920133]])
+    np.testing.assert_array_almost_equal(
+        test, np.array([[0.02366494, 0.16392256, 0.01920133]])
+    )
 
 
 def test_circular_bias():
@@ -60,7 +64,9 @@ def test_ratio(gosset):
         .tasmax
     )
     test = measures.ratio(sim, ref).values
-    np.testing.assert_array_almost_equal(test, [[1.023665, 1.1639225, 1.0192013]])
+    np.testing.assert_array_almost_equal(
+        test, np.array([[1.023665, 1.1639225, 1.0192013]])
+    )
 
 
 def test_rmse(gosset):
