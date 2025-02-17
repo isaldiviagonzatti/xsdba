@@ -127,11 +127,10 @@ jobs:
           environment-file: environment-dev.yml
           create-args: >-
             python=${{ matrix.python-version }}
-      - name: Install xclim development version
-        # FIXME: This is a workaround to install xclim v0.53, which is not released.
-        run: |
-          echo "Installing xclim from main branch until version 0.53.0+ is released"
-          python -m pip install git+https://github.com/Ouranosinc/xclim.git@main
+#      - name: Install xclim development version
+#        run: |
+#          echo "Installing xclim from main branch until version 0.53.0+ is released"
+#          python -m pip install git+https://github.com/Ouranosinc/xclim.git@main
       - name: Install xsdba
         run: |
           python -m pip install --no-deps .
