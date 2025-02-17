@@ -1,5 +1,6 @@
 # pylint: disable=missing-kwoa
-"""# noqa: SS01
+"""
+# noqa: SS01
 Adjustment Methods
 ==================
 """
@@ -63,7 +64,8 @@ __all__ = [
 
 
 class BaseAdjustment(ParametrizableWithDataset):
-    """Base class for adjustment objects.
+    """
+    Base class for adjustment objects.
 
     Children classes should implement the `train` and / or the `adjust` method.
 
@@ -84,7 +86,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     @classmethod
     def _check_inputs(cls, *inputs, group):
-        """Raise an error if there are chunks along the main dimension.
+        """
+        Raise an error if there are chunks along the main dimension.
 
         Also raises if :py:attr:`BaseAdjustment._allow_diff_calendars` is False and calendars differ.
         """
@@ -127,7 +130,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     @classmethod
     def _harmonize_units(cls, *inputs, target: dict[str] | str | None = None):
-        """Convert all inputs to the same units.
+        """
+        Convert all inputs to the same units.
 
         If the target unit is not given, the units of the first input are used.
 
@@ -203,7 +207,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
 
 class TrainAdjust(BaseAdjustment):
-    """Base class for adjustment objects obeying the train-adjust scheme.
+    """
+    Base class for adjustment objects obeying the train-adjust scheme.
 
     Children classes should implement these methods:
 
@@ -220,7 +225,8 @@ class TrainAdjust(BaseAdjustment):
 
     @classmethod
     def train(cls, ref: DataArray, hist: DataArray, **kwargs) -> TrainAdjust:
-        r"""Train the adjustment object.
+        r"""
+        Train the adjustment object.
 
         Refer to the class documentation for the algorithm details.
 
@@ -255,7 +261,8 @@ class TrainAdjust(BaseAdjustment):
         return obj
 
     def adjust(self, sim: DataArray, *args, **kwargs):
-        r"""Return bias-adjusted data.
+        r"""
+        Return bias-adjusted data.
 
         Refer to the class documentation for the algorithm details.
 
@@ -303,7 +310,8 @@ class TrainAdjust(BaseAdjustment):
         return scen
 
     def set_dataset(self, ds: xr.Dataset):
-        """Store an xarray dataset in the `ds` attribute.
+        """
+        Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
         """
@@ -319,7 +327,8 @@ class TrainAdjust(BaseAdjustment):
 
 
 class Adjust(BaseAdjustment):
-    """Adjustment with no intermediate trained object.
+    """
+    Adjustment with no intermediate trained object.
 
     Children classes should implement a `_adjust` classmethod taking as input the three DataArrays
     and returning the scen dataset/array.
@@ -333,7 +342,8 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray | None = None,
         **kwargs,
     ) -> xr.Dataset:
-        r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""
+        Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -388,7 +398,8 @@ class Adjust(BaseAdjustment):
 
 
 class EmpiricalQuantileMapping(TrainAdjust):
-    """Empirical Quantile Mapping bias-adjustment.
+    """
+    Empirical Quantile Mapping bias-adjustment.
 
     Attributes
     ----------
@@ -478,7 +489,8 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
 
 class DetrendedQuantileMapping(TrainAdjust):
-    r"""Detrended Quantile Mapping bias-adjustment.
+    r"""
+    Detrended Quantile Mapping bias-adjustment.
 
     Attributes
     ----------
@@ -598,7 +610,8 @@ class DetrendedQuantileMapping(TrainAdjust):
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
-    r"""Quantile Delta Mapping bias-adjustment.
+    r"""
+    Quantile Delta Mapping bias-adjustment.
 
     Attributes
     ----------
@@ -619,12 +632,9 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
     extrapolation : {'constant', 'nan'}
         The type of extrapolation to use. Defaults to "constant".
-
-    Extra diagnostics
-    -----------------
-    In adjustment:
-
-    quantiles : The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
+    quantiles : xr.DataArray
+        The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
+        This is an extra output that requires activation with `xsdba.set_options(extra_output=True)`.
 
     Notes
     -----
@@ -658,7 +668,8 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
 
 class ExtremeValues(TrainAdjust):
-    r"""Adjustment correction for extreme values.
+    r"""
+    Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the bias between the parametric Generalized
     Pareto distributions of the simulated and reference data :cite:p:`roy_extremeprecip_2023`. The distributions are composed of the
@@ -817,7 +828,8 @@ class ExtremeValues(TrainAdjust):
 
 
 class LOCI(TrainAdjust):
-    r"""Local Intensity Scaling (LOCI) bias-adjustment.
+    r"""
+    Local Intensity Scaling (LOCI) bias-adjustment.
 
     This bias adjustment method is designed to correct daily precipitation time series by considering wet and dry days
     separately :cite:p:`schmidli_downscaling_2006`.
@@ -891,7 +903,8 @@ class LOCI(TrainAdjust):
 
 
 class Scaling(TrainAdjust):
-    """Scaling bias-adjustment.
+    """
+    Scaling bias-adjustment.
 
     Simple bias-adjustment method scaling variables by an additive or multiplicative factor so that the mean of `hist`
     matches the mean of `ref`.
@@ -939,7 +952,8 @@ class Scaling(TrainAdjust):
 
 
 class PrincipalComponents(TrainAdjust):
-    r"""Principal component adjustment.
+    r"""
+    Principal component adjustment.
 
     This bias-correction method maps model simulation values to the observation space through principal components
     :cite:p:`hnilica_multisite_2017`. Values in the simulation space (multiple variables, or multiple sites) can be
@@ -948,11 +962,6 @@ class PrincipalComponents(TrainAdjust):
     Values can then be expressed as coordinates along the PC axes. The method makes the assumption that bias-corrected
     values have the same coordinates along the PC axes of the observations. By converting from the observation PC space
     to the original space, we get bias corrected values. See `Notes` for a mathematical explanation.
-
-    Warnings
-    --------
-    Be aware that *principal components* is meant here as the algebraic operation defining a coordinate system
-    based on the eigenvectors, not statistical principal component analysis.
 
     Attributes
     ----------
@@ -972,6 +981,11 @@ class PrincipalComponents(TrainAdjust):
         For a multisite adjustment, this should be the spatial dimension.
         The training algorithm currently doesn't support any chunking
         along either `crd_dim`. `group.dim` and `group.add_dims`.
+
+    Warnings
+    --------
+    Be aware that *principal components* is meant here as the algebraic operation defining a coordinate system
+    based on the eigenvectors, not statistical principal component analysis.
 
     Notes
     -----
@@ -1122,7 +1136,8 @@ class PrincipalComponents(TrainAdjust):
 
 
 class NpdfTransform(Adjust):
-    r"""N-dimensional probability density function transform.
+    r"""
+    N-dimensional probability density function transform.
 
     This adjustment object combines both training and adjust steps in the `adjust` class method.
 
@@ -1282,7 +1297,8 @@ class NpdfTransform(Adjust):
 
 
 class OTC(Adjust):
-    r"""Optimal Transport Correction.
+    r"""
+    Optimal Transport Correction.
 
     Following :cite:t:`robin_2019`, this multivariate bias correction method finds the optimal transport
     mapping between simulated and observed data. The correction of every simulated data point is the observed
@@ -1443,7 +1459,8 @@ class OTC(Adjust):
 
 
 class dOTC(Adjust):
-    r"""Dynamical Optimal Transport Correction.
+    r"""
+    Dynamical Optimal Transport Correction.
 
     This method is the dynamical version of :py:class:`~xsdba.adjustment.OTC`, as presented by :cite:t:`robin_2019`.
     The temporal evolution of the model is found for every point by mapping the historical to the future dataset with
@@ -1606,7 +1623,8 @@ class dOTC(Adjust):
 
 
 class MBCn(TrainAdjust):
-    r"""Multivariate bias correction function using the N-dimensional probability density function transform.
+    r"""
+    Multivariate bias correction function using the N-dimensional probability density function transform.
 
     A multivariate bias-adjustment algorithm described by :cite:t:`cannon_multivariate_2018`
     based on a color-correction algorithm described by :cite:t:`pitie_n-dimensional_2005`.
@@ -1693,15 +1711,15 @@ class MBCn(TrainAdjust):
 
     The random matrices are generated following a method laid out by :cite:t:`mezzadri_how_2007`.
 
-    References
-    ----------
-    :cite:cts:`cannon_multivariate_2018,cannon_mbc_2020,pitie_n-dimensional_2005,mezzadri_how_2007,szekely_testing_2004`
-
     Notes
     -----
     * Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     * The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
       datasets are constructed by stacking the timeseries of N variables together using ``xsdba.stack_variables``.
+
+    References
+    ----------
+    :cite:cts:`cannon_multivariate_2018,cannon_mbc_2020,pitie_n-dimensional_2005,mezzadri_how_2007,szekely_testing_2004`
     """
 
     @classmethod
