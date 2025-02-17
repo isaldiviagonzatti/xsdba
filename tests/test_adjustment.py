@@ -210,7 +210,8 @@ class TestDQM:
         "kind,units", [(ADDITIVE, "K"), (MULTIPLICATIVE, "kg m-2 s-1")]
     )
     def test_quantiles(self, timelonlatseries, kind, units, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -363,7 +364,8 @@ class TestQDM:
         "kind,units", [(ADDITIVE, "K"), (MULTIPLICATIVE, "kg m-2 s-1")]
     )
     def test_quantiles(self, timelonlatseries, kind, units, random):
-        """Train on
+        """
+        Train on
         x : U(1,1)
         y : U(1,2)
 
@@ -542,7 +544,8 @@ class TestQM:
         "kind,units", [(ADDITIVE, "K"), (MULTIPLICATIVE, "kg m-2 s-1")]
     )
     def test_quantiles(self, timelonlatseries, kind, units, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
