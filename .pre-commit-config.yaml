@@ -24,14 +24,22 @@ repos:
     rev: v0.24.2
     hooks:
       - id: toml-sort-fix
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
       - id: python-no-eval
       - id: python-no-log-warn
       - id: python-use-type-annotations
+      - id: rst-directive-colons
       - id: rst-inline-touching-normal
+      - id: text-unicode-replacement-char
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 25.1.0
     hooks:
@@ -58,6 +66,10 @@ repos:
     rev: 'v2.14'
     hooks:
       - id: vulture
+#  - repo: https://github.com/pre-commit/mirrors-mypy
+#    rev: v1.14.1
+#    hooks:
+#      - id: mypy
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.9.1
     hooks:
@@ -65,7 +77,7 @@ repos:
         args: [ '--py310-plus' ]
         additional_dependencies: [ 'pyupgrade==3.19.0' ]
       - id: nbqa-black
-        additional_dependencies: [ 'black==24.10.0' ]
+        additional_dependencies: [ 'black==25.1.0' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:
@@ -78,11 +90,12 @@ repos:
       - id: blackdoc
         additional_dependencies: [ 'black==25.1.0' ]
       - id: blackdoc-autoupdate-black
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
     hooks:
-      - id: yamllint
-        args: [ '--config-file=.yamllint.yaml' ]
+      - id: codespell
+        additional_dependencies: [ 'tomli' ]
+        args: [ '--toml=pyproject.toml' ]
   - repo: https://github.com/numpy/numpydoc
     rev: v1.8.0
     hooks:
@@ -93,6 +106,15 @@ repos:
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: zizmor
+        args: [ '--config=.zizmor.yml' ]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
   - repo: meta
     hooks:
       - id: check-hooks-apply

@@ -1,6 +1,7 @@
 # noqa: D104
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 
 import numpy as np
@@ -159,7 +160,7 @@ def gosset(threadsafe_data_dir, worker_id):
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir) -> Path:
+def tmp_netcdf_filename(tmpdir) -> Generator:
     yield Path(tmpdir).joinpath("testfile.nc")
 
 
