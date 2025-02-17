@@ -1,6 +1,7 @@
 # noqa: D104
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 
 import numpy as np
@@ -21,7 +22,9 @@ from xsdba.testing.utils import (
     gather_testing_data,
 )
 from xsdba.testing.utils import gosset as _gosset
-from xsdba.testing.utils import testing_setup_warnings
+from xsdba.testing.utils import (
+    testing_setup_warnings,
+)
 from xsdba.utils import apply_correction
 
 
@@ -157,7 +160,7 @@ def gosset(threadsafe_data_dir, worker_id):
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir) -> Path:
+def tmp_netcdf_filename(tmpdir) -> Generator:
     yield Path(tmpdir).joinpath("testfile.nc")
 
 
