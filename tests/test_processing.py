@@ -286,7 +286,7 @@ def test_stack_variables(gosset):
     da1 = stack_variables(ds1)
     da2 = stack_variables(ds2)
 
-    # FIXME: Thes test for variable order; use a membership test instead
+    # FIXME: These test for variable order; use a membership test instead
     assert list(da1.multivar.values) == ["pr", "tasmax"]
     assert da1.multivar.attrs["_standard_name"] == [
         "precipitation_flux",

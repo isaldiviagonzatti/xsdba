@@ -180,7 +180,7 @@ def invert(x: xr.DataArray, kind: str | None = None) -> xr.DataArray:
         if kind == ADDITIVE:
             return -x
         if kind == MULTIPLICATIVE:
-            return 1 / x  # type: ignore
+            return 1 / x
         raise ValueError
 
 

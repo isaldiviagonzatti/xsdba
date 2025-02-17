@@ -5,17 +5,22 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
 
 Changes
 ^^^^^^^
 * Remove the units registry declaration and instead use whatever is set as pint's application registry.
   Code still assumes it is a registry based upon the one in cf-xarray (which exports the `cf` formatter). (:issue:`44`, :pull:`57`).
+* Updated the cookiecutter template to use the latest version of `cookiecutter-pypackage`. (:pull:`71`):
+    * Python and GitHub Actions versions have been updated.
+    * Now using advanced CodeQL configuration.
+    * New pre-commit hooks for `vulture` (find dead code), `codespell` (grammatical errors), `zizmor` (workflow security), and `gitleaks` (token commit prevention).
+    * Corrected some minor spelling and security issues.
 
 Fixes
 ^^^^^
 * Gave credits to the package to all previous contributors of ``xclim.sdba`` (:issue:`58`, :pull:`59`).
-* Pin `sphinx-codeautolink` to fix ReadTheDocs and correct some docs errors (:pull:`40`).
+* Removed reliance on the `netcdf4` package for testing purposes. The `h5netcdf` engine is now used for file IO operations. (:pull:`71`).
 
 .. _changes_0.2.0:
 

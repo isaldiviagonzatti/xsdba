@@ -13,7 +13,9 @@ from xsdba.units import convert_units_to, pint_multiply
 class TestProperties:
     def test_mean(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
         ).load()
@@ -31,7 +33,9 @@ class TestProperties:
 
     def test_var(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
         ).load()
@@ -49,7 +53,9 @@ class TestProperties:
 
     def test_std(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
         ).load()
@@ -67,7 +73,9 @@ class TestProperties:
 
     def test_skewness(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
         ).load()
@@ -90,7 +98,9 @@ class TestProperties:
 
     def test_quantile(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
         ).load()
@@ -112,7 +122,9 @@ class TestProperties:
 
     def test_spell_length_distribution(self, gosset):
         ds = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .load()
         )
@@ -188,9 +200,9 @@ class TestProperties:
         self, window, expected_amount, expected_quantile, gosset
     ):
         ds = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc")).sel(
-                time=slice("1950", "1952"), location="Vancouver"
-            )
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            ).sel(time=slice("1950", "1952"), location="Vancouver")
         ).load()
         tx = ds.tasmax
         with set_options(keep_attrs=True):
@@ -242,7 +254,9 @@ class TestProperties:
 
     def test_acf(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
         ).load()
@@ -259,7 +273,9 @@ class TestProperties:
 
     def test_annual_cycle(self, gosset):
         simt = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
         ).load()
@@ -294,7 +310,9 @@ class TestProperties:
 
     def test_annual_range(self, gosset):
         simt = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
         ).load()
@@ -338,7 +356,9 @@ class TestProperties:
 
     def test_corr_btw_var(self, gosset):
         simt = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
         ).load()
@@ -383,7 +403,9 @@ class TestProperties:
 
     def test_relative_frequency(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
         ).load()
@@ -404,7 +426,9 @@ class TestProperties:
 
     def test_transition(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
         ).load()
@@ -422,7 +446,9 @@ class TestProperties:
 
     def test_trend(self, gosset):
         simt = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
         ).load()
@@ -492,7 +518,9 @@ class TestProperties:
 
     def test_return_value(self, gosset):
         simt = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1950", "2010"), location="Vancouver")
             .tasmax
         ).load()
@@ -515,7 +543,9 @@ class TestProperties:
         # This also tests sdba.utils._pairwise_spearman and sdba.nbutils._pairwise_haversine_and_bins
         # Test 1, does it work with 1D data?
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1981", "2010"))
             .tasmax
         ).load()
@@ -544,7 +574,8 @@ class TestProperties:
     def test_decorrelation_length(self, gosset):
         sim = (
             xr.open_dataset(
-                gosset.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc")
+                gosset.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"),
+                engine="h5netcdf",
             )
             .tasmax.isel(lon=slice(0, 5), lat=slice(0, 1))
             .load()
@@ -561,13 +592,15 @@ class TestProperties:
     # ADAPT? The plan was not to allow mm/d -> kg m-2 s-1 in xsdba
     def test_get_measure(self, gosset):
         sim = (
-            xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+            xr.open_dataset(
+                gosset.fetch("sdba/CanESM2_1950-2100.nc"), engine="h5netcdf"
+            )
             .sel(time=slice("1981", "2010"), location="Vancouver")
             .pr
         ).load()
 
         ref = (
-            xr.open_dataset(gosset.fetch("sdba/ahccd_1950-2013.nc"))
+            xr.open_dataset(gosset.fetch("sdba/ahccd_1950-2013.nc"), engine="h5netcdf")
             .sel(time=slice("1981", "2010"), location="Vancouver")
             .pr
         ).load()
