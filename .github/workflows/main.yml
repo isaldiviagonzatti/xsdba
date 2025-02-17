@@ -31,7 +31,7 @@ jobs:
           - "3.x"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           egress-policy: audit
       - name: Checkout Repository
@@ -70,7 +70,7 @@ jobs:
           # - "3.13"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           egress-policy: audit
       - name: Checkout Repository
@@ -112,7 +112,7 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           egress-policy: audit
       - name: Checkout Repository
@@ -157,11 +157,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           disable-sudo: true
           egress-policy: audit
       - name: Coveralls Finished
-        uses: coverallsapp/github-action@cfd0633edbd2411b532b808ba7a8b5e04f76d2c8 # v2.3.4
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
           parallel-finished: true
