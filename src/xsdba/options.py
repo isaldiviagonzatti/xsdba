@@ -23,7 +23,8 @@ _VALIDATORS = {
 
 
 class set_options:
-    """Set options for xsdba in a controlled context.
+    """
+    Set options for xsdba in a controlled context.
 
     Attributes
     ----------

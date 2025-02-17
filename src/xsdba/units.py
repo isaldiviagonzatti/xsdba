@@ -1,4 +1,5 @@
-"""# noqa: SS01
+"""
+# noqa: SS01
 Units Handling Submodule
 ========================
 """
@@ -50,7 +51,8 @@ def infer_sampling_units(
     deffreq: str | None = "D",
     dim: str = "time",
 ) -> tuple[int, str]:
-    """Infer a multiplier and the units corresponding to one sampling period.
+    """
+    Infer a multiplier and the units corresponding to one sampling period.
 
     Parameters
     ----------
@@ -92,7 +94,8 @@ def infer_sampling_units(
 
 
 def _parse_str(value: str) -> tuple[str, str]:
-    """Parse a str as a number and a unit.
+    """
+    Parse a str as a number and a unit.
 
     Parameters
     ----------
@@ -118,7 +121,8 @@ def _parse_str(value: str) -> tuple[str, str]:
 def units2pint(
     value: xr.DataArray | units.Unit | units.Quantity | dict | str,
 ) -> pint.Unit:
-    """Return the pint Unit for the DataArray units.
+    """
+    Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
@@ -182,7 +186,8 @@ def units2pint(
 
 
 def units2str(value: xr.DataArray | str | units.Quantity | units.Unit) -> str:
-    """Return a str unit from various inputs.
+    """
+    Return a str unit from various inputs.
 
     Parameters
     ----------
@@ -200,7 +205,8 @@ def units2str(value: xr.DataArray | str | units.Quantity | units.Unit) -> str:
 
 # XC
 def str2pint(val: str) -> pint.Quantity:
-    """Convert a string to a pint.Quantity, splitting the magnitude and the units.
+    """
+    Convert a string to a pint.Quantity, splitting the magnitude and the units.
 
     Parameters
     ----------
@@ -221,7 +227,8 @@ def str2pint(val: str) -> pint.Quantity:
 def pint_multiply(
     da: xr.DataArray, q: pint.Quantity | str, out_units: str | None = None
 ) -> xr.DataArray:
-    """Multiply xarray.DataArray by pint.Quantity.
+    """
+    Multiply xarray.DataArray by pint.Quantity.
 
     Parameters
     ----------
@@ -256,7 +263,8 @@ DELTA_ABSOLUTE_TEMP = {
 
 # XC
 def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict:
-    """Return CF-compliant units attributes from a `pint` unit.
+    """
+    Return CF-compliant units attributes from a `pint` unit.
 
     Parameters
     ----------
@@ -295,7 +303,8 @@ def convert_units_to(  # noqa: C901
     source: Quantified,
     target: Quantified | units.Unit,
 ) -> xr.DataArray | float:
-    """Convert a mathematical expression into a value with the same units as a DataArray.
+    """
+    Convert a mathematical expression into a value with the same units as a DataArray.
 
     If the dimensionalities of source and target units differ, automatic CF conversions
     will be applied when possible.
@@ -330,7 +339,8 @@ def convert_units_to(  # noqa: C901
 
 
 def extract_units(arg):
-    """Extract units from a string, DataArray, or scalar.
+    """
+    Extract units from a string, DataArray, or scalar.
 
     Wrapper that can also yield `None`.
     """

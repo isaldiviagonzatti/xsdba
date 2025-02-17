@@ -154,7 +154,8 @@ def testing_setup_warnings():
 def load_registry(
     branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
 ) -> dict[str, str]:
-    """Load the registry file for the test data.
+    """
+    Load the registry file for the test data.
 
     Returns
     -------
@@ -191,7 +192,8 @@ def gosset(  # noqa: PR01
     cache_dir: str | Path = TESTDATA_CACHE_DIR,
     data_updates: bool = True,
 ):
-    """Pooch registry instance for xsdba test data.
+    """
+    Pooch registry instance for xsdba test data.
 
     Parameters
     ----------
@@ -255,7 +257,8 @@ def populate_testing_data(
     branch: str = TESTDATA_BRANCH,
     local_cache: Path = TESTDATA_CACHE_DIR,
 ) -> None:
-    """Populate the local cache with the testing data.
+    """
+    Populate the local cache with the testing data.
 
     Parameters
     ----------
@@ -332,7 +335,8 @@ def gather_testing_data(
 
 
 def audit_url(url: str, context: str | None = None) -> str:
-    """Check if the URL is well-formed.
+    """
+    Check if the URL is well-formed.
 
     Raises
     ------
