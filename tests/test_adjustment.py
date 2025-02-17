@@ -87,7 +87,7 @@ class TestLoci:
         xd = uniform(loc=0, scale=3)
         x = xd.ppf(u)
 
-        attrs = {"units": "kg m-2 s-1", "kind": MULTIPLICATIVE}
+        # attrs = {"units": "kg m-2 s-1", "kind": MULTIPLICATIVE}  # not used
 
         hist = sim = timelonlatseries(x, attrs={"units": "kg m-2 s-1"})
         y = x * 2
@@ -108,9 +108,9 @@ class TestLoci:
         assert "Bias-adjusted with LOCI(" in p.attrs["history"]
 
         file = tmp_path / "test_loci.nc"
-        loci.ds.to_netcdf(file)
+        loci.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = xr.open_dataset(file, engine="h5netcdf")
         loci2 = LOCI.from_dataset(ds)
 
         xr.testing.assert_equal(loci.ds, loci2.ds)
@@ -339,21 +339,21 @@ class TestDQM:
     def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, random):
         ref, hist, sim = cannon_2015_rvs(15000, random=random)
 
-        DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
-        p = DQM.adjust(sim)
+        dqm = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
+        p = dqm.adjust(sim)
 
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
         file = tmp_path / "test_dqm.nc"
-        DQM.ds.to_netcdf(file)
+        dqm.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
-        DQM2 = DetrendedQuantileMapping.from_dataset(ds)
+        ds = xr.open_dataset(file, engine="h5netcdf")
+        dqm2 = DetrendedQuantileMapping.from_dataset(ds)
 
-        xr.testing.assert_equal(DQM.ds, DQM2.ds)
+        xr.testing.assert_equal(dqm.ds, dqm2.ds)
 
-        p2 = DQM2.adjust(sim)
+        p2 = dqm2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
 
 
@@ -891,6 +891,7 @@ class TestExtremeValues:
         new_scen.load()
 
 
+# FIXME: These tests are missing some variables
 class TestOTC:
     def test_compare_sbck(self, random, timelonlatseries):
         pytest.importorskip("ot")
@@ -908,7 +909,7 @@ class TestOTC:
         hist_x = hist_xd.ppf(u)
         hist_y = hist_yd.ppf(u)
 
-        # Constructing an histogram such that every bin contains
+        # Constructing a histogram such that every bin contains
         # at most 1 point should ensure that ot is deterministic
         dx_ref = np.diff(np.sort(ref_x)).min()
         dx_hist = np.diff(np.sort(hist_x)).min()
@@ -1022,7 +1023,7 @@ class TestdOTC:
         sim_x = sim_xd.ppf(u)
         sim_y = sim_yd.ppf(u)
 
-        # Constructing an histogram such that every bin contains
+        # Constructing a histogram such that every bin contains
         # at most 1 point should ensure that ot is deterministic
         dx_ref = np.diff(np.sort(ref_x)).min()
         dx_hist = np.diff(np.sort(hist_x)).min()
@@ -1144,6 +1145,7 @@ class TestdOTC:
         sim = xr.merge([sim_x, sim_y, sim_z])
         sim = stack_variables(sim)
 
+        # FIXME: import dOTC
         scen = dOTC.adjust(ref, hist, sim)
 
         assert scen.shape == (3, sim_ns - sim_na)
@@ -1164,9 +1166,9 @@ def test_default_grouper_understood(timelonlatseries):
     attrs_tas = {"units": "K", "kind": ADDITIVE}
     ref = timelonlatseries(np.arange(730).astype(float), attrs=attrs_tas)
 
-    EQM = EmpiricalQuantileMapping.train(ref, ref)
-    EQM.adjust(ref)
-    assert EQM.group.dim == "time"
+    eqm = EmpiricalQuantileMapping.train(ref, ref)
+    eqm.adjust(ref)
+    assert eqm.group.dim == "time"
 
 
 class TestSBCKutils:
@@ -1177,7 +1179,7 @@ class TestSBCKutils:
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask, random):
-        SBCK = pytest.importorskip("SBCK", minversion="0.4.0")
+        sbck = pytest.importorskip("SBCK", minversion="0.4.0")
 
         n = 10 * 365
         m = 2  # A dummy dimension to test vectorization.
@@ -1232,7 +1234,7 @@ class TestSBCKutils:
         if "TSMBC" in method:
             kws = {"lag": 1}
         elif "MBCn" in method:
-            kws = {"metric": SBCK.metrics.energy}
+            kws = {"metric": sbck.metrics.energy}
         else:
             kws = {}
 
