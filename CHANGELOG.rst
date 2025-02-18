@@ -16,6 +16,7 @@ Changes
     * Now using advanced CodeQL configuration.
     * New pre-commit hooks for `vulture` (find dead code), `codespell` (grammatical errors), `zizmor` (workflow security), and `gitleaks` (token commit prevention).
     * Corrected some minor spelling and security issues.
+* Add a new grouping method specific for `MBCn` which called by passing `group=Grouper("5D", window=n)` where `n` is a odd positive integer. (`pull`:79).
 
 Fixes
 ^^^^^
