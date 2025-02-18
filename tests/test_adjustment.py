@@ -700,10 +700,10 @@ class TestQM:
     def test_different_times_training(self, timelonlatseries, random):
         n = 10
         u = random.random(n)
-        ref = timelonlatseries(u, start="2000-01-01")
+        ref = timelonlatseries(u, start="2000-01-01", attrs={"units": "K"})
         u2 = random.random(n)
-        hist = timelonlatseries(u2, start="2000-01-01")
-        hist_fut = timelonlatseries(u2, start="2001-01-01")
+        hist = timelonlatseries(u2, start="2000-01-01", attrs={"units": "K"})
+        hist_fut = timelonlatseries(u2, start="2001-01-01", attrs={"units": "K"})
         ds = EmpiricalQuantileMapping.train(ref, hist).ds
         EmpiricalQuantileMapping._allow_diff_training_times = True
         ds_fut = EmpiricalQuantileMapping.train(ref, hist_fut).ds
