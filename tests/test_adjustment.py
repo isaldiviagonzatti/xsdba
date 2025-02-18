@@ -77,21 +77,21 @@ class TestBaseAdjustment:
         ds, ds2 = unstack_variables(da), unstack_variables(da2)
         assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
 
-    def test_matching_times(self, series, random):
+    def test_matching_times(self, timelonlatseries, random):
         n = 10
         u = random.random(n)
-        da = series(u, "tas", start="2000-01-01")
-        da2 = series(u, "tas", start="2010-01-01")
+        da = timelonlatseries(u, start="2000-01-01")
+        da2 = timelonlatseries(u, start="2010-01-01")
         with pytest.raises(
             ValueError,
             match="`ref` and `hist` have distinct time arrays, this is not supported for BaseAdjustment adjustment.",
         ):
             BaseAdjustment._check_matching_times(ref=da, hist=da2)
 
-    def test_matching_time_sizes(self, series, random):
+    def test_matching_time_sizes(self, timelonlatseries, random):
         n = 10
         u = random.random(n)
-        da = series(u, "tas", start="2000-01-01")
+        da = timelonlatseries(u, start="2000-01-01")
         da2 = da.isel(time=slice(0, 5)).copy()
         with pytest.raises(
             ValueError,
@@ -697,13 +697,13 @@ class TestQM:
         scen2 = EQM2.adjust(sim).load()
         assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
 
-    def test_different_times_training(self, series, random):
+    def test_different_times_training(self, timelonlatseries, random):
         n = 10
         u = random.random(n)
-        ref = series(u, "tas", start="2000-01-01")
+        ref = timelonlatseries(u, start="2000-01-01")
         u2 = random.random(n)
-        hist = series(u2, "tas", start="2000-01-01")
-        hist_fut = series(u2, "tas", start="2001-01-01")
+        hist = timelonlatseries(u2, start="2000-01-01")
+        hist_fut = timelonlatseries(u2, start="2001-01-01")
         ds = EmpiricalQuantileMapping.train(ref, hist).ds
         EmpiricalQuantileMapping._allow_diff_training_times = True
         ds_fut = EmpiricalQuantileMapping.train(ref, hist_fut).ds
