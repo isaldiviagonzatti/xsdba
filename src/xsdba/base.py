@@ -335,11 +335,11 @@ class Grouper(Parametrizable):
             else:
                 i = getattr(ind, self.prop)
 
-        if not np.issubdtype(i.dtype, np.integer):
-            raise ValueError(
-                f"Index {self.name} is not of type int (rather {i.dtype}), "
-                f"but {self.__class__.__name__} requires integer indexes."
-            )
+            if not np.issubdtype(i.dtype, np.integer):
+                raise ValueError(
+                    f"Index {self.name} is not of type int (rather {i.dtype}), "
+                    f"but {self.__class__.__name__} requires integer indexes."
+                )
 
         xi = xr.DataArray(
             i,
