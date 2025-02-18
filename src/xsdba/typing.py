@@ -1,4 +1,5 @@
-"""# noqa: SS01
+"""
+# noqa: SS01
 Typing Utilities
 ===================================
 """
@@ -24,7 +25,8 @@ Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
 # XC
 class InputKind(IntEnum):
-    """Constants for input parameter kinds.
+    """
+    Constants for input parameter kinds.
 
     For use by external parses to determine what kind of data the indicator expects.
     On the creation of an indicator, the appropriate constant is stored in

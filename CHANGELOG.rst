@@ -21,7 +21,9 @@ Changes
 Fixes
 ^^^^^
 * Gave credits to the package to all previous contributors of ``xclim.sdba`` (:issue:`58`, :pull:`59`).
+* Pin `sphinx-codeautolink` to fix ReadTheDocs and correct some docs errors (:pull:`40`).
 * Removed reliance on the `netcdf4` package for testing purposes. The `h5netcdf` engine is now used for file IO operations. (:pull:`71`).
+* Changes to reflect the change of library name `xsdba` (:pull:`72`)
 
 .. _changes_0.2.0:
 

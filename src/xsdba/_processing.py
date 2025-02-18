@@ -1,4 +1,5 @@
-"""# noqa: SS01
+"""
+# noqa: SS01
 Compute Functions Submodule
 ===========================
 
@@ -107,7 +108,8 @@ def _normalize(
     dim: Sequence[str],
     kind: str = ADDITIVE,
 ) -> xr.Dataset:
-    """Normalize an array by removing its mean.
+    """
+    Normalize an array by removing its mean.
 
     Parameters
     ----------
@@ -143,7 +145,8 @@ def _normalize(
 
 @map_groups(reordered=[Grouper.DIM], main_only=False)
 def _reordering(ds: xr.Dataset, *, dim: str) -> xr.Dataset:
-    """Group-wise reordering.
+    """
+    Group-wise reordering.
 
     Parameters
     ----------
