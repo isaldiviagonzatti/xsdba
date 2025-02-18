@@ -1,4 +1,5 @@
-"""# noqa: SS01
+"""
+# noqa: SS01
 Formatting Utilities
 ===================================
 """
@@ -22,7 +23,8 @@ def merge_attributes(
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
-    r"""Merge attributes from several DataArrays or Datasets.
+    r"""
+    Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
@@ -73,7 +75,8 @@ def update_history(
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
-    r"""Return a history string with the timestamped message and the combination of the history of all inputs.
+    r"""
+    Return a history string with the timestamped message and the combination of the history of all inputs.
 
     The new history entry is formatted as "[<timestamp>] <new_name>: <hist_str> - xsdba version: <xsdba.__version__>."
 
@@ -121,7 +124,8 @@ def update_history(
 
 # XC
 def update_xsdba_history(func: Callable):
-    """Decorator that auto-generates and fills the history attribute.
+    """
+    Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
     Because of a limitation of the `boltons` wrapper, all arguments passed to the wrapped function
@@ -169,7 +173,8 @@ def gen_call_string(
     *args,
     **kwargs,
 ) -> str:
-    r"""Generate a signature string for use in the history attribute.
+    r"""
+    Generate a signature string for use in the history attribute.
 
     DataArrays and Dataset are replaced with their name, while Nones, floats, ints and strings are printed directly.
     All other objects have their type printed between < >.
@@ -182,8 +187,8 @@ def gen_call_string(
     funcname : str
         Name of the function.
 
-    Example
-    -------
+    Examples
+    --------
     >>> A = xr.DataArray([1], dims=("x",), name="A")
     >>> gen_call_string("func", A, b=2.0, c="3", d=[10] * 100)
     "func(A, b=2.0, c='3', d=<list>)"
