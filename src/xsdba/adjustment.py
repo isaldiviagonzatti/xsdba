@@ -76,7 +76,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     _allow_diff_calendars = True
     _allow_diff_training_times = True
     _allow_diff_time_sizes = True
-    _attribute = "_xclim_adjustment"
+    _attribute = "_xsdba_adjustment"
 
     def __init__(self, *args, _trained=False, **kwargs):
         if _trained:
