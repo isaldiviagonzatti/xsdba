@@ -1,0 +1,2 @@
+xarray @ git+https://github.com/pydata/xarray.git@main
+xclim @ git+https://github.com/Ouranosinc/xclim.git@main
