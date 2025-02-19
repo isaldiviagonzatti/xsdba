@@ -74,6 +74,8 @@ class BaseAdjustment(ParametrizableWithDataset):
     """
 
     _allow_diff_calendars = True
+    _allow_diff_training_times = True
+    _allow_diff_time_sizes = True
     _attribute = "_xsdba_adjustment"
 
     def __init__(self, *args, _trained=False, **kwargs):
@@ -199,6 +201,26 @@ class BaseAdjustment(ParametrizableWithDataset):
         return (convert_units_to(inda, target) for inda in inputs), target
 
     @classmethod
+    def _check_matching_times(cls, ref, hist):
+        """Raise an error ref and hist times don't match."""
+        if all(ref.time.values == hist.time.values) is False:
+            raise ValueError(
+                "`ref` and `hist` have distinct time arrays,"
+                f" this is not supported for {cls.__name__} adjustment."
+            )
+
+    @classmethod
+    def _check_matching_time_sizes(cls, *inputs):
+        """Raise an error if inputs have different size for the time arrays."""
+        ref_size = inputs[0].time.size
+        for inp in inputs[1:]:
+            if inp.time.size != ref_size:
+                raise ValueError(
+                    "Inputs have different size for the time array,"
+                    f" this is not supported for {cls.__name__} adjustment."
+                )
+
+    @classmethod
     def _train(cls, ref, hist, **kwargs):
         raise NotImplementedError()
 
@@ -250,6 +272,14 @@ class TrainAdjust(BaseAdjustment):
         else:
             train_units = ""
 
+        # For some methods, `ref` and `hist` must share the same time array
+        if not cls._allow_diff_training_times:
+            cls._check_matching_times(ref, hist)
+        # We may also use a different time period for `hist` but still require
+        # it has the same size as `ref`'s time.
+        elif not cls._allow_diff_time_sizes:
+            cls._check_matching_time_sizes(ref, hist)
+            hist["time"] = ref.time
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
             _trained=True,
@@ -365,6 +395,14 @@ class Adjust(BaseAdjustment):
             sim = hist.copy()
             sim.attrs["_is_hist"] = True
 
+        if not cls._allow_diff_time_sizes:
+            cls._check_matching_time_sizes(ref, hist, sim)
+            # If `ref,hist, sim` are in the same `map_groups` call, they must have the same time
+            # As long as `sim` has the same time dimension, we can temporarily replace its time
+            # with the reference time
+            sim_time = sim.time
+            sim["time"] = ref["time"]
+
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
 
@@ -380,6 +418,8 @@ class Adjust(BaseAdjustment):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
+        if not cls._allow_diff_time_sizes:
+            scen["time"] = sim_time
 
         params = ", ".join([f"{k}={v!r}" for k, v in kwargs.items()])
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
@@ -441,6 +481,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -543,6 +584,7 @@ class DetrendedQuantileMapping(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -873,6 +915,7 @@ class LOCI(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -926,6 +969,7 @@ class Scaling(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -1398,6 +1442,9 @@ class OTC(Adjust):
     :cite:cts:`robin_2019,robin_2021`
     """
 
+    _allow_diff_calendars = False
+    _allow_diff_time_sizes = False
+
     @classmethod
     def _adjust(
         cls,
@@ -1430,7 +1477,10 @@ class OTC(Adjust):
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
-        if adapt_freq_thresh is not None:
+        adapt_freq_thresh = (
+            {} if adapt_freq_thresh is None else deepcopy(adapt_freq_thresh)
+        )
+        if adapt_freq_thresh != {}:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
                 adapt_freq_thresh[var] = str(convert_units_to(thresh, units[var]))
@@ -1552,6 +1602,9 @@ class dOTC(Adjust):
     :cite:cts:`robin_2019,robin_2021`
     """
 
+    _allow_diff_calendars = False
+    _allow_diff_time_sizes = False
+
     @classmethod
     def _adjust(
         cls,
@@ -1592,7 +1645,10 @@ class dOTC(Adjust):
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
-        if adapt_freq_thresh is not None:
+        adapt_freq_thresh = (
+            {} if adapt_freq_thresh is None else deepcopy(adapt_freq_thresh)
+        )
+        if adapt_freq_thresh != {}:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
                 adapt_freq_thresh[var] = str(convert_units_to(thresh, units[var]))
@@ -1722,6 +1778,10 @@ class MBCn(TrainAdjust):
     :cite:cts:`cannon_multivariate_2018,cannon_mbc_2020,pitie_n-dimensional_2005,mezzadri_how_2007,szekely_testing_2004`
     """
 
+    _allow_diff_calendars = False
+    _allow_diff_training_times = False
+    _allow_diff_time_sizes = False
+
     @classmethod
     def _train(
         cls,
@@ -1803,7 +1863,7 @@ class MBCn(TrainAdjust):
         period_dim=None,
     ):
         # set default values for non-specified parameters
-        base_kws_vars = base_kws_vars or {}
+        base_kws_vars = {} if base_kws_vars is None else deepcopy(base_kws_vars)
         pts_dim = self.pts_dims[0]
         for v in sim[pts_dim].values:
             base_kws_vars.setdefault(v, {})

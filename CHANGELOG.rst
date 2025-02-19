@@ -17,6 +17,7 @@ Changes
     * New pre-commit hooks for `vulture` (find dead code), `codespell` (grammatical errors), `zizmor` (workflow security), and `gitleaks` (token commit prevention).
     * Corrected some minor spelling and security issues.
 * Added `upstream` testing to the CI pipeline for both daily and push events. (:pull:`61`).
+* Import last changes in xclim before the embargo (:pull:`80`).
 
 Fixes
 ^^^^^

@@ -973,8 +973,7 @@ def _bivariate_spell_length_distribution(
     threshs = [thresh1, thresh2]
     for i, da in enumerate([da1, da2]):
         if methods[i] == "amount":
-            # ADAPT: will this work?
-            threshs[i] = convert_units_to(threshs[i], da)  # , context="infer")
+            threshs[i] = convert_units_to(threshs[i], da)
         elif methods[i] != "quantile":
             raise ValueError(
                 f"{methods[i]} is not a valid method. Choose 'amount' or 'quantile'."
@@ -1138,7 +1137,7 @@ def _relative_frequency(
     if op not in allowed_ops:
         raise ValueError(f"`op` must be in {allowed_ops}, but {op} was given.")
 
-    t = convert_units_to(thresh, da)  # , context="infer")
+    t = convert_units_to(thresh, da)
     length = da.sizes[group.dim]
     cond = compare(da, op, t)
     if group.prop != "group":  # change the time resolution if necessary
@@ -1203,7 +1202,7 @@ def _transition_probability(
     today = da.isel(time=slice(0, -1))
     tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
 
-    t = convert_units_to(thresh, da)  # , context="infer")
+    t = convert_units_to(thresh, da)
     cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
     out = group.apply("mean", cond)
     out = out.where(mask, np.nan)
