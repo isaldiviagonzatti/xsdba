@@ -1,4 +1,5 @@
-"""# noqa: SS01
+"""
+# noqa: SS01
 Detrending Objects Utilities
 ============================
 """
@@ -14,7 +15,8 @@ from xsdba.utils import ADDITIVE, apply_correction, invert
 
 
 class BaseDetrend(ParametrizableWithDataset):
-    """Base class for detrending objects.
+    """
+    Base class for detrending objects.
 
     Defines three methods:
 
@@ -34,7 +36,8 @@ class BaseDetrend(ParametrizableWithDataset):
 
     @parse_group
     def __init__(self, *, group: Grouper | str = "time", kind: str = "+", **kwargs):
-        """Initialize Detrending object.
+        """
+        Initialize Detrending object.
 
         Parameters
         ----------
@@ -52,7 +55,8 @@ class BaseDetrend(ParametrizableWithDataset):
         return hasattr(self, "ds")
 
     def fit(self, da: xr.DataArray):
-        """Extract the trend of a DataArray along a specific dimension.
+        """
+        Extract the trend of a DataArray along a specific dimension.
 
         Returns a new object that can be used for detrending and retrending.
         Fitted objects are unique to the fitted coordinate used.
@@ -64,7 +68,8 @@ class BaseDetrend(ParametrizableWithDataset):
         return new
 
     def _get_trend(self, da: xr.DataArray):
-        """Compute the trend along the self.group.dim as found on da.
+        """
+        Compute the trend along the self.group.dim as found on da.
 
         If da is a DataArray (and has a `dtype` attribute), the trend is cast to have the same dtype.
 
@@ -148,7 +153,8 @@ def _meandetrend_get_trend(da, *, dim, kind):
 
 
 class PolyDetrend(BaseDetrend):
-    """Detrend time series using a polynomial regression.
+    """
+    Detrend time series using a polynomial regression.
 
     Attributes
     ----------
@@ -193,7 +199,8 @@ def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
 
 
 class LoessDetrend(BaseDetrend):
-    """Detrend time series using a LOESS regression.
+    """
+    Detrend time series using a LOESS regression.
 
     The fit is a piecewise linear regression. For each point, the contribution of all
     neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
@@ -278,7 +285,8 @@ def _loessdetrend_get_trend(
 
 
 class RollingMeanDetrend(BaseDetrend):
-    """Detrend time series using a rolling mean.
+    """
+    Detrend time series using a rolling mean.
 
     Attributes
     ----------
