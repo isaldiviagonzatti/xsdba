@@ -402,7 +402,7 @@ def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="cons
     Arguments are the same as _interp_on_quantiles_2d.
     """
     bnds = _first_and_last_nonnull(oldx)
-    xp = np.arange(bnds.shape[0])
+    xp = oldg[:, 0]
     toolow = newx < np.interp(newg, xp, bnds[:, 0])
     toohigh = newx > np.interp(newg, xp, bnds[:, 1])
     if method == "constant":

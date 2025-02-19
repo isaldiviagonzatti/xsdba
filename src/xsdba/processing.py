@@ -214,7 +214,6 @@ def jitter(
     --------
     Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
     """
-    # with units.context(infer_context(x.attrs.get("standard_name"))):
     out: xr.DataArray = x
     notnull = x.notnull()
     if lower is not None:
@@ -568,7 +567,6 @@ def to_additive_space(
     ----------
     :cite:cts:`alavoine_distinct_2022`.
     """
-    # with units.context(infer_context(data.attrs.get("standard_name"))):
     lower_bound_array = np.array(lower_bound).astype(float)
     if upper_bound is not None:
         upper_bound_array = np.array(upper_bound).astype(float)
