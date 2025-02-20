@@ -1,5 +1,6 @@
 # pylint: disable=missing-kwoa
-"""# noqa: SS01
+"""
+# noqa: SS01
 Adjustment Methods
 ==================
 """
@@ -34,7 +35,7 @@ from xsdba._adjustment import (
 )
 from xsdba.base import Grouper, ParametrizableWithDataset, parse_group, uses_dask
 from xsdba.formatting import gen_call_string, update_history
-from xsdba.options import OPTIONS, XSDBA_EXTRA_OUTPUT, set_options
+from xsdba.options import EXTRA_OUTPUT, OPTIONS, set_options
 from xsdba.processing import grouped_time_indexes
 from xsdba.units import convert_units_to
 from xsdba.utils import (
@@ -63,7 +64,8 @@ __all__ = [
 
 
 class BaseAdjustment(ParametrizableWithDataset):
-    """Base class for adjustment objects.
+    """
+    Base class for adjustment objects.
 
     Children classes should implement the `train` and / or the `adjust` method.
 
@@ -72,6 +74,8 @@ class BaseAdjustment(ParametrizableWithDataset):
     """
 
     _allow_diff_calendars = True
+    _allow_diff_training_times = True
+    _allow_diff_time_sizes = True
     _attribute = "_xsdba_adjustment"
 
     def __init__(self, *args, _trained=False, **kwargs):
@@ -84,7 +88,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     @classmethod
     def _check_inputs(cls, *inputs, group):
-        """Raise an error if there are chunks along the main dimension.
+        """
+        Raise an error if there are chunks along the main dimension.
 
         Also raises if :py:attr:`BaseAdjustment._allow_diff_calendars` is False and calendars differ.
         """
@@ -127,7 +132,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     @classmethod
     def _harmonize_units(cls, *inputs, target: dict[str] | str | None = None):
-        """Convert all inputs to the same units.
+        """
+        Convert all inputs to the same units.
 
         If the target unit is not given, the units of the first input are used.
 
@@ -195,6 +201,26 @@ class BaseAdjustment(ParametrizableWithDataset):
         return (convert_units_to(inda, target) for inda in inputs), target
 
     @classmethod
+    def _check_matching_times(cls, ref, hist):
+        """Raise an error ref and hist times don't match."""
+        if all(ref.time.values == hist.time.values) is False:
+            raise ValueError(
+                "`ref` and `hist` have distinct time arrays,"
+                f" this is not supported for {cls.__name__} adjustment."
+            )
+
+    @classmethod
+    def _check_matching_time_sizes(cls, *inputs):
+        """Raise an error if inputs have different size for the time arrays."""
+        ref_size = inputs[0].time.size
+        for inp in inputs[1:]:
+            if inp.time.size != ref_size:
+                raise ValueError(
+                    "Inputs have different size for the time array,"
+                    f" this is not supported for {cls.__name__} adjustment."
+                )
+
+    @classmethod
     def _train(cls, ref, hist, **kwargs):
         raise NotImplementedError()
 
@@ -203,7 +229,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
 
 class TrainAdjust(BaseAdjustment):
-    """Base class for adjustment objects obeying the train-adjust scheme.
+    """
+    Base class for adjustment objects obeying the train-adjust scheme.
 
     Children classes should implement these methods:
 
@@ -220,7 +247,8 @@ class TrainAdjust(BaseAdjustment):
 
     @classmethod
     def train(cls, ref: DataArray, hist: DataArray, **kwargs) -> TrainAdjust:
-        r"""Train the adjustment object.
+        r"""
+        Train the adjustment object.
 
         Refer to the class documentation for the algorithm details.
 
@@ -244,6 +272,14 @@ class TrainAdjust(BaseAdjustment):
         else:
             train_units = ""
 
+        # For some methods, `ref` and `hist` must share the same time array
+        if not cls._allow_diff_training_times:
+            cls._check_matching_times(ref, hist)
+        # We may also use a different time period for `hist` but still require
+        # it has the same size as `ref`'s time.
+        elif not cls._allow_diff_time_sizes:
+            cls._check_matching_time_sizes(ref, hist)
+            hist["time"] = ref.time
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
             _trained=True,
@@ -255,7 +291,8 @@ class TrainAdjust(BaseAdjustment):
         return obj
 
     def adjust(self, sim: DataArray, *args, **kwargs):
-        r"""Return bias-adjusted data.
+        r"""
+        Return bias-adjusted data.
 
         Refer to the class documentation for the algorithm details.
 
@@ -298,12 +335,13 @@ class TrainAdjust(BaseAdjustment):
         if _is_multivariate is False:
             scen.attrs["units"] = self.train_units
 
-        if OPTIONS[XSDBA_EXTRA_OUTPUT]:
+        if OPTIONS[EXTRA_OUTPUT]:
             return out
         return scen
 
     def set_dataset(self, ds: xr.Dataset):
-        """Store an xarray dataset in the `ds` attribute.
+        """
+        Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
         """
@@ -319,7 +357,8 @@ class TrainAdjust(BaseAdjustment):
 
 
 class Adjust(BaseAdjustment):
-    """Adjustment with no intermediate trained object.
+    """
+    Adjustment with no intermediate trained object.
 
     Children classes should implement a `_adjust` classmethod taking as input the three DataArrays
     and returning the scen dataset/array.
@@ -333,7 +372,8 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray | None = None,
         **kwargs,
     ) -> xr.Dataset:
-        r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""
+        Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -355,6 +395,14 @@ class Adjust(BaseAdjustment):
             sim = hist.copy()
             sim.attrs["_is_hist"] = True
 
+        if not cls._allow_diff_time_sizes:
+            cls._check_matching_time_sizes(ref, hist, sim)
+            # If `ref,hist, sim` are in the same `map_groups` call, they must have the same time
+            # As long as `sim` has the same time dimension, we can temporarily replace its time
+            # with the reference time
+            sim_time = sim.time
+            sim["time"] = ref["time"]
+
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
 
@@ -370,6 +418,8 @@ class Adjust(BaseAdjustment):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
+        if not cls._allow_diff_time_sizes:
+            scen["time"] = sim_time
 
         params = ", ".join([f"{k}={v!r}" for k, v in kwargs.items()])
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
@@ -382,13 +432,14 @@ class Adjust(BaseAdjustment):
         if _is_multivariate is False:
             scen.attrs["units"] = ref.units
 
-        if OPTIONS[XSDBA_EXTRA_OUTPUT]:
+        if OPTIONS[EXTRA_OUTPUT]:
             return out
         return scen
 
 
 class EmpiricalQuantileMapping(TrainAdjust):
-    """Empirical Quantile Mapping bias-adjustment.
+    """
+    Empirical Quantile Mapping bias-adjustment.
 
     Attributes
     ----------
@@ -430,6 +481,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -478,7 +530,8 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
 
 class DetrendedQuantileMapping(TrainAdjust):
-    r"""Detrended Quantile Mapping bias-adjustment.
+    r"""
+    Detrended Quantile Mapping bias-adjustment.
 
     Attributes
     ----------
@@ -531,6 +584,7 @@ class DetrendedQuantileMapping(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -598,7 +652,8 @@ class DetrendedQuantileMapping(TrainAdjust):
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
-    r"""Quantile Delta Mapping bias-adjustment.
+    r"""
+    Quantile Delta Mapping bias-adjustment.
 
     Attributes
     ----------
@@ -619,12 +674,9 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
     extrapolation : {'constant', 'nan'}
         The type of extrapolation to use. Defaults to "constant".
-
-    Extra diagnostics
-    -----------------
-    In adjustment:
-
-    quantiles : The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
+    quantiles : xr.DataArray
+        The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
+        This is an extra output that requires activation with `xsdba.set_options(extra_output=True)`.
 
     Notes
     -----
@@ -651,14 +703,15 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
             extrapolation=extrapolation,
             kind=self.kind,
         )
-        if OPTIONS[XSDBA_EXTRA_OUTPUT]:
+        if OPTIONS[EXTRA_OUTPUT]:
             out.sim_q.attrs.update(long_name="Group-wise quantiles of `sim`.")
             return out
         return out.scen
 
 
 class ExtremeValues(TrainAdjust):
-    r"""Adjustment correction for extreme values.
+    r"""
+    Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the bias between the parametric Generalized
     Pareto distributions of the simulated and reference data :cite:p:`roy_extremeprecip_2023`. The distributions are composed of the
@@ -817,7 +870,8 @@ class ExtremeValues(TrainAdjust):
 
 
 class LOCI(TrainAdjust):
-    r"""Local Intensity Scaling (LOCI) bias-adjustment.
+    r"""
+    Local Intensity Scaling (LOCI) bias-adjustment.
 
     This bias adjustment method is designed to correct daily precipitation time series by considering wet and dry days
     separately :cite:p:`schmidli_downscaling_2006`.
@@ -861,6 +915,7 @@ class LOCI(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -891,7 +946,8 @@ class LOCI(TrainAdjust):
 
 
 class Scaling(TrainAdjust):
-    """Scaling bias-adjustment.
+    """
+    Scaling bias-adjustment.
 
     Simple bias-adjustment method scaling variables by an additive or multiplicative factor so that the mean of `hist`
     matches the mean of `ref`.
@@ -913,6 +969,7 @@ class Scaling(TrainAdjust):
     """
 
     _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -939,7 +996,8 @@ class Scaling(TrainAdjust):
 
 
 class PrincipalComponents(TrainAdjust):
-    r"""Principal component adjustment.
+    r"""
+    Principal component adjustment.
 
     This bias-correction method maps model simulation values to the observation space through principal components
     :cite:p:`hnilica_multisite_2017`. Values in the simulation space (multiple variables, or multiple sites) can be
@@ -948,11 +1006,6 @@ class PrincipalComponents(TrainAdjust):
     Values can then be expressed as coordinates along the PC axes. The method makes the assumption that bias-corrected
     values have the same coordinates along the PC axes of the observations. By converting from the observation PC space
     to the original space, we get bias corrected values. See `Notes` for a mathematical explanation.
-
-    Warnings
-    --------
-    Be aware that *principal components* is meant here as the algebraic operation defining a coordinate system
-    based on the eigenvectors, not statistical principal component analysis.
 
     Attributes
     ----------
@@ -972,6 +1025,11 @@ class PrincipalComponents(TrainAdjust):
         For a multisite adjustment, this should be the spatial dimension.
         The training algorithm currently doesn't support any chunking
         along either `crd_dim`. `group.dim` and `group.add_dims`.
+
+    Warnings
+    --------
+    Be aware that *principal components* is meant here as the algebraic operation defining a coordinate system
+    based on the eigenvectors, not statistical principal component analysis.
 
     Notes
     -----
@@ -1122,7 +1180,8 @@ class PrincipalComponents(TrainAdjust):
 
 
 class NpdfTransform(Adjust):
-    r"""N-dimensional probability density function transform.
+    r"""
+    N-dimensional probability density function transform.
 
     This adjustment object combines both training and adjust steps in the `adjust` class method.
 
@@ -1273,7 +1332,7 @@ class NpdfTransform(Adjust):
             "adj_kws": adj_kws or {},
         }
 
-        with set_options(xsdba_extra_output=False):
+        with set_options(extra_output=False):
             out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
 
         out = out.assign(rotation_matrices=rot_matrices)
@@ -1282,7 +1341,8 @@ class NpdfTransform(Adjust):
 
 
 class OTC(Adjust):
-    r"""Optimal Transport Correction.
+    r"""
+    Optimal Transport Correction.
 
     Following :cite:t:`robin_2019`, this multivariate bias correction method finds the optimal transport
     mapping between simulated and observed data. The correction of every simulated data point is the observed
@@ -1308,7 +1368,7 @@ class OTC(Adjust):
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     adapt_freq_thresh : dict or str, optional
         Threshold for frequency adaptation per variable.
-        See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        See :py:class:`xsdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables if is dict.
         Applied to all variables if is string.
     normalization : {None, 'standardize', 'max_distance', 'max_value'}
@@ -1316,11 +1376,11 @@ class OTC(Adjust):
         Default is "max_distance".
         See notes for details.
     group : Union[str, Grouper]
-        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        The grouping information. See :py:class:`xsdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
     pts_dim : str
         The name of the "multivariate" dimension. Defaults to "multivar", which is the
-        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+        normal case when using :py:func:`xsdba.base.stack_variables`.
 
     Notes
     -----
@@ -1382,6 +1442,9 @@ class OTC(Adjust):
     :cite:cts:`robin_2019,robin_2021`
     """
 
+    _allow_diff_calendars = False
+    _allow_diff_time_sizes = False
+
     @classmethod
     def _adjust(
         cls,
@@ -1414,7 +1477,10 @@ class OTC(Adjust):
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
-        if adapt_freq_thresh is not None:
+        adapt_freq_thresh = (
+            {} if adapt_freq_thresh is None else deepcopy(adapt_freq_thresh)
+        )
+        if adapt_freq_thresh != {}:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
                 adapt_freq_thresh[var] = str(convert_units_to(thresh, units[var]))
@@ -1443,9 +1509,10 @@ class OTC(Adjust):
 
 
 class dOTC(Adjust):
-    r"""Dynamical Optimal Transport Correction.
+    r"""
+    Dynamical Optimal Transport Correction.
 
-    This method is the dynamical version of :py:class:`~xclim.sdba.adjustment.OTC`, as presented by :cite:t:`robin_2019`.
+    This method is the dynamical version of :py:class:`~xsdba.adjustment.OTC`, as presented by :cite:t:`robin_2019`.
     The temporal evolution of the model is found for every point by mapping the historical to the future dataset with
     optimal transport. A mapping between historical and reference data is found in the same way, and the temporal evolution
     of model data is applied to their assigned reference.
@@ -1479,26 +1546,26 @@ class dOTC(Adjust):
         Applied to all variables if is string.
     adapt_freq_thresh : dict or str, optional
         Threshold for frequency adaptation per variable.
-        See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        See :py:class:`xsdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables if is dict.
         Applied to all variables if is string.
     normalization : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated
         in the optimal transport. Default is "max_distance".
-        See :py:class:`~xclim.sdba.adjustment.OTC` for details.
+        See :py:class:`~xsdba.adjustment.OTC` for details.
     group : Union[str, Grouper]
-        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        The grouping information. See :py:class:`xsdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
     pts_dim : str
         The name of the "multivariate" dimension. Defaults to "multivar", which is the
-        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+        normal case when using :py:func:`xsdba.base.stack_variables`.
 
     Notes
     -----
     The simulated historical, simulated future and observed data sets :math:`X0`, :math:`X1` and :math:`Y0` are
     discretized and standardized using histograms whose bin length along dimension `k` is given by `bin_width[k]`.
     Mappings between :math:`Y0` and :math:`X0` on the one hand and between :math:`X0` and :math:`X1` on the other
-    are found by optimal transport (see :py:class:`~xclim.sdba.adjustment.OTC`). The latter mapping is used to
+    are found by optimal transport (see :py:class:`~xsdba.adjustment.OTC`). The latter mapping is used to
     compute the temporal evolution of model data. This evolution is computed additively or multiplicatively for
     each variable depending on its `kind`, and is applied to observed data with
 
@@ -1534,6 +1601,9 @@ class dOTC(Adjust):
     ----------
     :cite:cts:`robin_2019,robin_2021`
     """
+
+    _allow_diff_calendars = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
@@ -1575,7 +1645,10 @@ class dOTC(Adjust):
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
-        if adapt_freq_thresh is not None:
+        adapt_freq_thresh = (
+            {} if adapt_freq_thresh is None else deepcopy(adapt_freq_thresh)
+        )
+        if adapt_freq_thresh != {}:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
                 adapt_freq_thresh[var] = str(convert_units_to(thresh, units[var]))
@@ -1606,7 +1679,8 @@ class dOTC(Adjust):
 
 
 class MBCn(TrainAdjust):
-    r"""Multivariate bias correction function using the N-dimensional probability density function transform.
+    r"""
+    Multivariate bias correction function using the N-dimensional probability density function transform.
 
     A multivariate bias-adjustment algorithm described by :cite:t:`cannon_multivariate_2018`
     based on a color-correction algorithm described by :cite:t:`pitie_n-dimensional_2005`.
@@ -1693,16 +1767,20 @@ class MBCn(TrainAdjust):
 
     The random matrices are generated following a method laid out by :cite:t:`mezzadri_how_2007`.
 
-    References
-    ----------
-    :cite:cts:`cannon_multivariate_2018,cannon_mbc_2020,pitie_n-dimensional_2005,mezzadri_how_2007,szekely_testing_2004`
-
     Notes
     -----
     * Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     * The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
       datasets are constructed by stacking the timeseries of N variables together using ``xsdba.stack_variables``.
+
+    References
+    ----------
+    :cite:cts:`cannon_multivariate_2018,cannon_mbc_2020,pitie_n-dimensional_2005,mezzadri_how_2007,szekely_testing_2004`
     """
+
+    _allow_diff_calendars = False
+    _allow_diff_training_times = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _train(
@@ -1785,7 +1863,7 @@ class MBCn(TrainAdjust):
         period_dim=None,
     ):
         # set default values for non-specified parameters
-        base_kws_vars = base_kws_vars or {}
+        base_kws_vars = {} if base_kws_vars is None else deepcopy(base_kws_vars)
         pts_dim = self.pts_dims[0]
         for v in sim[pts_dim].values:
             base_kws_vars.setdefault(v, {})

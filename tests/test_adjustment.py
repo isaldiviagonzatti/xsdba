@@ -37,10 +37,10 @@ from xsdba.utils import (
 )
 
 
-def nancov(x):
-    """Drop observations with NaNs from Numpy's cov."""
-    x_na = np.isnan(x).any(axis=0)
-    return np.cov(x[:, ~x_na])
+def nancov(X):
+    """Numpy's cov but dropping observations with NaNs."""
+    X_na = np.isnan(X).any(axis=0)
+    return np.cov(X[:, ~X_na])
 
 
 class TestBaseAdjustment:
@@ -76,6 +76,28 @@ class TestBaseAdjustment:
         (da, da2), _ = BaseAdjustment._harmonize_units(da, da2)
         ds, ds2 = unstack_variables(da), unstack_variables(da2)
         assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
+
+    def test_matching_times(self, timelonlatseries, random):
+        n = 10
+        u = random.random(n)
+        da = timelonlatseries(u, start="2000-01-01")
+        da2 = timelonlatseries(u, start="2010-01-01")
+        with pytest.raises(
+            ValueError,
+            match="`ref` and `hist` have distinct time arrays, this is not supported for BaseAdjustment adjustment.",
+        ):
+            BaseAdjustment._check_matching_times(ref=da, hist=da2)
+
+    def test_matching_time_sizes(self, timelonlatseries, random):
+        n = 10
+        u = random.random(n)
+        da = timelonlatseries(u, start="2000-01-01")
+        da2 = da.isel(time=slice(0, 5)).copy()
+        with pytest.raises(
+            ValueError,
+            match="Inputs have different size for the time array, this is not supported for BaseAdjustment adjustment.",
+        ):
+            BaseAdjustment._check_matching_time_sizes(da, da2)
 
 
 class TestLoci:
@@ -119,6 +141,7 @@ class TestLoci:
         np.testing.assert_array_equal(p, p2)
 
     @pytest.mark.requires_internet
+    @pytest.mark.enable_socket
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, _sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
@@ -210,7 +233,8 @@ class TestDQM:
         "kind,units", [(ADDITIVE, "K"), (MULTIPLICATIVE, "kg m-2 s-1")]
     )
     def test_quantiles(self, timelonlatseries, kind, units, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -363,7 +387,8 @@ class TestQDM:
         "kind,units", [(ADDITIVE, "K"), (MULTIPLICATIVE, "kg m-2 s-1")]
     )
     def test_quantiles(self, timelonlatseries, kind, units, random):
-        """Train on
+        """
+        Train on
         x : U(1,1)
         y : U(1,2)
 
@@ -512,7 +537,7 @@ class TestQDM:
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
 
         # Quantile mapping
-        with set_options(xsdba_extra_output=True):
+        with set_options(extra_output=True):
             QDM = QuantileDeltaMapping.train(
                 ref, hist, kind="*", group="time", nquantiles=50
             )
@@ -542,7 +567,8 @@ class TestQM:
         "kind,units", [(ADDITIVE, "K"), (MULTIPLICATIVE, "kg m-2 s-1")]
     )
     def test_quantiles(self, timelonlatseries, kind, units, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -633,44 +659,56 @@ class TestQM:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_add_dims(self, use_dask, gosset):
-        with set_options(sdba_encode_cf=use_dask):
-            if use_dask:
-                chunks = {"location": -1}
-            else:
-                chunks = None
+        if use_dask:
+            chunks = {"location": -1}
+        else:
+            chunks = None
 
-            dsim = xr.open_dataset(
-                gosset.fetch("sdba/CanESM2_1950-2100.nc"),
+        dsim = xr.open_dataset(
+            gosset.fetch("sdba/CanESM2_1950-2100.nc"),
+            chunks=chunks,
+            drop_variables=["lat", "lon"],
+        ).tasmax
+        hist = dsim.sel(time=slice("1981", "2010"))
+        sim = dsim.sel(time=slice("2041", "2070"))
+
+        ref = (
+            xr.open_dataset(
+                gosset.fetch("sdba/ahccd_1950-2013.nc"),
                 chunks=chunks,
                 drop_variables=["lat", "lon"],
-            ).tasmax
-            hist = dsim.sel(time=slice("1981", "2010"))
-            sim = dsim.sel(time=slice("2041", "2070"))
-
-            ref = (
-                xr.open_dataset(
-                    gosset.fetch("sdba/ahccd_1950-2013.nc"),
-                    chunks=chunks,
-                    drop_variables=["lat", "lon"],
-                )
-                .sel(time=slice("1981", "2010"))
-                .tasmax
             )
-            ref = convert_units_to(ref, "K")
-            # The idea is to have ref defined only over 1 location
-            # But sdba needs the same dimensions on ref and hist for Grouping with add_dims
-            ref = ref.where(ref.location == "Amos")
+            .sel(time=slice("1981", "2010"))
+            .tasmax
+        )
+        ref = convert_units_to(ref, "K")
+        # The idea is to have ref defined only over 1 location
+        # But sdba needs the same dimensions on ref and hist for Grouping with add_dims
+        ref = ref.where(ref.location == "Amos")
 
-            # With add_dims, "does it run" test
-            group = Grouper("time.dayofyear", window=5, add_dims=["location"])
-            EQM = EmpiricalQuantileMapping.train(ref, hist, group=group)
-            EQM.adjust(sim).load()
+        # With add_dims, "does it run" test
+        group = Grouper("time.dayofyear", window=5, add_dims=["location"])
+        EQM = EmpiricalQuantileMapping.train(ref, hist, group=group)
+        EQM.adjust(sim).load()
 
-            # Without, sanity test.
-            group = Grouper("time.dayofyear", window=5)
-            EQM2 = EmpiricalQuantileMapping.train(ref, hist, group=group)
-            scen2 = EQM2.adjust(sim).load()
-            assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
+        # Without, sanity test.
+        group = Grouper("time.dayofyear", window=5)
+        EQM2 = EmpiricalQuantileMapping.train(ref, hist, group=group)
+        scen2 = EQM2.adjust(sim).load()
+        assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
+
+    def test_different_times_training(self, timelonlatseries, random):
+        n = 10
+        u = random.random(n)
+        ref = timelonlatseries(u, start="2000-01-01", attrs={"units": "K"})
+        u2 = random.random(n)
+        hist = timelonlatseries(u2, start="2000-01-01", attrs={"units": "K"})
+        hist_fut = timelonlatseries(u2, start="2001-01-01", attrs={"units": "K"})
+        ds = EmpiricalQuantileMapping.train(ref, hist).ds
+        EmpiricalQuantileMapping._allow_diff_training_times = True
+        ds_fut = EmpiricalQuantileMapping.train(ref, hist_fut).ds
+        EmpiricalQuantileMapping._allow_diff_training_times = False
+        assert (ds.af == ds_fut.af).all()
 
 
 @pytest.mark.slow
@@ -680,35 +718,32 @@ class TestMBCn:
     @pytest.mark.parametrize("period_dim", [None, "period"])
     def test_simple(self, use_dask, group, window, period_dim, gosset):
         group, window, period_dim, use_dask = "time", 1, None, False
-        with set_options(sdba_encode_cf=use_dask):
-            if use_dask:
-                chunks = {"location": -1}
-            else:
-                chunks = None
-            ref, dsim = (
-                xr.open_dataset(
-                    gosset.fetch(f"sdba/{file}"),
-                    chunks=chunks,
-                    drop_variables=["lat", "lon"],
-                )
-                .isel(location=1, drop=True)
-                .expand_dims(location=["Amos"])
-                for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
+        if use_dask:
+            chunks = {"location": -1}
+        else:
+            chunks = None
+        ref, dsim = (
+            xr.open_dataset(
+                gosset.fetch(f"sdba/{file}"),
+                chunks=chunks,
+                drop_variables=["lat", "lon"],
             )
-            water_density_inverse = "1e-03 m^3/kg"
-            dsim["pr"] = convert_units_to(
-                pint_multiply(dsim.pr, water_density_inverse), ref.pr
-            )
-            ref, hist = (
-                ds.sel(time=slice("1981", "2010")).isel(time=slice(365 * 4))
-                for ds in [ref, dsim]
-            )
-            dsim = dsim.sel(time=slice("1981", None))
-            sim = (stack_periods(dsim).isel(period=slice(1, 2))).isel(
-                time=slice(365 * 4)
-            )
+            .isel(location=1, drop=True)
+            .expand_dims(location=["Amos"])
+            for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
+        )
+        water_density_inverse = "1e-03 m^3/kg"
+        dsim["pr"] = convert_units_to(
+            pint_multiply(dsim.pr, water_density_inverse), ref.pr
+        )
+        ref, hist = (
+            ds.sel(time=slice("1981", "2010")).isel(time=slice(365 * 4))
+            for ds in [ref, dsim]
+        )
+        dsim = dsim.sel(time=slice("1981", None))
+        sim = (stack_periods(dsim).isel(period=slice(1, 2))).isel(time=slice(365 * 4))
 
-            ref, hist, sim = (stack_variables(ds) for ds in [ref, hist, sim])
+        ref, hist, sim = (stack_variables(ds) for ds in [ref, hist, sim])
 
         MBCN = MBCn.train(
             ref,
@@ -884,14 +919,26 @@ class TestExtremeValues:
             ref, hist, group=Grouper("time.dayofyear", window=31), nquantiles=quantiles
         )
 
-        scen = EQM.adjust(hist, interp="linear", extrapolation="constant")
+        scen = EQM.adjust(hist, extrapolation="constant")
 
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
         new_scen.load()
 
+    def test_nan_values(self):
+        times = xr.cftime_range("1990-01-01", periods=365, calendar="noleap")
+        ref = xr.DataArray(
+            np.arange(365),
+            dims=("time"),
+            coords={"time": times},
+            attrs={"units": "mm/day"},
+        )
+        hist = (ref.copy() * np.nan).assign_attrs(ref.attrs)
+        EX = ExtremeValues.train(ref, hist, cluster_thresh="10 mm/day", q_thresh=0.9)
+        new_scen = EX.adjust(sim=hist, scen=ref)
+        assert new_scen.isnull().all()
 
-# FIXME: These tests are missing some variables
+
 class TestOTC:
     def test_compare_sbck(self, random, timelonlatseries):
         pytest.importorskip("ot")
@@ -943,56 +990,6 @@ class TestOTC:
         scen = scen.to_numpy().T
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
-
-    def test_shape(self, random, timelonlatseries):
-        pytest.importorskip("ot")
-        pytest.importorskip("SBCK", minversion="0.4.0")
-
-        attrs_tas = {"units": "K", "kind": ADDITIVE}
-
-        ref_ns = 300
-        hist_ns = 200
-        ref_u = random.random(ref_ns)
-        hist_u = random.random(hist_ns)
-
-        ref_xd = uniform(loc=1000, scale=100)
-        ref_yd = norm(loc=0, scale=100)
-        ref_zd = norm(loc=500, scale=100)
-        hist_xd = norm(loc=-500, scale=100)
-        hist_yd = uniform(loc=-1000, scale=100)
-        hist_zd = uniform(loc=-10, scale=100)
-
-        ref_x = ref_xd.ppf(ref_u)
-        ref_y = ref_yd.ppf(ref_u)
-        ref_z = ref_zd.ppf(ref_u)
-        hist_x = hist_xd.ppf(hist_u)
-        hist_y = hist_yd.ppf(hist_u)
-        hist_z = hist_zd.ppf(hist_u)
-
-        ref_na = 10
-        hist_na = 15
-        ref_idx = random.choice(range(ref_ns), size=ref_na, replace=False)
-        ref_x[ref_idx] = None
-        hist_idx = random.choice(range(hist_ns), size=hist_na, replace=False)
-        hist_x[hist_idx] = None
-
-        ref_x = timelonlatseries(ref_x, attrs=attrs_tas).rename("x")
-        ref_y = timelonlatseries(ref_y, attrs=attrs_tas).rename("y")
-        ref_z = timelonlatseries(ref_z, attrs=attrs_tas).rename("z")
-        ref = xr.merge([ref_x, ref_y, ref_z])
-        ref = stack_variables(ref)
-
-        hist_x = timelonlatseries(hist_x, attrs=attrs_tas).rename("x")
-        hist_y = timelonlatseries(hist_y, attrs=attrs_tas).rename("y")
-        hist_z = timelonlatseries(hist_z, attrs=attrs_tas).rename("z")
-        hist = xr.merge([hist_x, hist_y, hist_z])
-        hist = stack_variables(hist)
-
-        scen = OTC.adjust(ref, hist)
-
-        assert scen.shape == (3, hist_ns - hist_na)
-        hist = unstack_variables(hist)
-        assert not np.isin(hist.x[hist.x.isnull()].time.values, scen.time.values).any()
 
 
 # TODO: Add tests for normalization methods
@@ -1086,71 +1083,30 @@ class TestdOTC:
     def test_shape(self, random, timelonlatseries):
 
         pytest.importorskip("ot")
-        pytest.importorskip("SBCK", minversion="0.4.0")
-
-        attrs_tas = {"units": "K", "kind": ADDITIVE}
-
-        ref_ns = 300
-        hist_ns = 200
-        sim_ns = 400
-        ref_u = random.random(ref_ns)
-        hist_u = random.random(hist_ns)
-        sim_u = random.random(sim_ns)
-
-        ref_xd = uniform(loc=1000, scale=100)
-        ref_yd = norm(loc=0, scale=100)
-        ref_zd = norm(loc=500, scale=100)
-        hist_xd = norm(loc=-500, scale=100)
-        hist_yd = uniform(loc=-1000, scale=100)
-        hist_zd = uniform(loc=-10, scale=100)
-        sim_xd = norm(loc=0, scale=100)
-        sim_yd = uniform(loc=0, scale=100)
-        sim_zd = uniform(loc=10, scale=100)
-
-        ref_x = ref_xd.ppf(ref_u)
-        ref_y = ref_yd.ppf(ref_u)
-        ref_z = ref_zd.ppf(ref_u)
-        hist_x = hist_xd.ppf(hist_u)
-        hist_y = hist_yd.ppf(hist_u)
-        hist_z = hist_zd.ppf(hist_u)
-        sim_x = sim_xd.ppf(sim_u)
-        sim_y = sim_yd.ppf(sim_u)
-        sim_z = sim_zd.ppf(sim_u)
-
-        ref_na = 10
-        hist_na = 15
-        sim_na = 20
-        ref_idx = random.choice(range(ref_ns), size=ref_na, replace=False)
-        ref_x[ref_idx] = None
-        hist_idx = random.choice(range(hist_ns), size=hist_na, replace=False)
-        hist_x[hist_idx] = None
-        sim_idx = random.choice(range(sim_ns), size=sim_na, replace=False)
-        sim_x[sim_idx] = None
-
-        ref_x = timelonlatseries(ref_x, attrs=attrs_tas).rename("x")
-        ref_y = timelonlatseries(ref_y, attrs=attrs_tas).rename("y")
-        ref_z = timelonlatseries(ref_z, attrs=attrs_tas).rename("z")
-        ref = xr.merge([ref_x, ref_y, ref_z])
-        ref = stack_variables(ref)
-
-        hist_x = timelonlatseries(hist_x, attrs=attrs_tas).rename("x")
-        hist_y = timelonlatseries(hist_y, attrs=attrs_tas).rename("y")
-        hist_z = timelonlatseries(hist_z, attrs=attrs_tas).rename("z")
-        hist = xr.merge([hist_x, hist_y, hist_z])
-        hist = stack_variables(hist)
-
-        sim_x = timelonlatseries(sim_x, attrs=attrs_tas).rename("x")
-        sim_y = timelonlatseries(sim_y, attrs=attrs_tas).rename("y")
-        sim_z = timelonlatseries(sim_z, attrs=attrs_tas).rename("z")
-        sim = xr.merge([sim_x, sim_y, sim_z])
-        sim = stack_variables(sim)
-
-        # FIXME: import dOTC
-        scen = dOTC.adjust(ref, hist, sim)
-
-        assert scen.shape == (3, sim_ns - sim_na)
-        sim = unstack_variables(sim)
-        assert not np.isin(sim.x[sim.x.isnull()].time.values, scen.time.values).any()
+        # `sim` has a different time than `ref,hist` (but same size)
+        ref = xr.merge(
+            [
+                tasmax_series(np.arange(730).astype(float), start="2000-01-01").chunk(
+                    {"time": -1}
+                ),
+                tasmin_series(np.arange(730).astype(float), start="2000-01-01").chunk(
+                    {"time": -1}
+                ),
+            ]
+        )
+        hist = ref.copy()
+        sim = xr.merge(
+            [
+                tasmax_series(np.arange(730).astype(float), start="2020-01-01").chunk(
+                    {"time": -1}
+                ),
+                tasmin_series(np.arange(730).astype(float), start="2020-01-01").chunk(
+                    {"time": -1}
+                ),
+            ]
+        )
+        ref, hist, sim = (stack_variables(arr) for arr in [ref, hist, sim])
+        dOTC.adjust(ref, hist, sim)
 
 
 def test_raise_on_multiple_chunks(timelonlatseries):

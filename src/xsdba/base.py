@@ -1,4 +1,5 @@
-"""# noqa: SS01
+"""
+# noqa: SS01
 Base Classes and Developer Tools
 ================================
 """
@@ -18,14 +19,15 @@ import xarray as xr
 from boltons.funcutils import wraps
 from xarray.core import dtypes
 
-from xsdba.options import OPTIONS, SDBA_ENCODE_CF
+from xsdba.options import OPTIONS
 
 # TODO : Redistributes some functions in existing/new scripts
 
 
 # ## Base class for the sdba module
 class Parametrizable(UserDict):
-    """Helper base class resembling a dictionary.
+    """
+    Helper base class resembling a dictionary.
 
     This object is _completely_ defined by the content of its internal dictionary, accessible through item access
     (`self['attr']`) or in `self.parameters`. When serializing and restoring this object, only members of that internal
@@ -85,7 +87,8 @@ class ParametrizableWithDataset(Parametrizable):
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset):
-        """Create an instance from a dataset.
+        """
+        Create an instance from a dataset.
 
         The dataset must have a global attribute with a name corresponding to `cls._attribute`,
         and that attribute must be the result of `jsonpickle.encode(object)` where object is
@@ -96,7 +99,8 @@ class ParametrizableWithDataset(Parametrizable):
         return obj
 
     def set_dataset(self, ds: xr.Dataset) -> None:
-        """Store an xarray dataset in the `ds` attribute.
+        """
+        Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
         """
@@ -120,7 +124,8 @@ class Grouper(Parametrizable):
         window: int = 1,
         add_dims: Sequence[str] | set[str] | None = None,
     ):
-        """Create the Grouper object.
+        """
+        Create the Grouper object.
 
         Parameters
         ----------
@@ -165,7 +170,8 @@ class Grouper(Parametrizable):
 
     @property
     def freq(self):
-        """Format a frequency string corresponding to the group.
+        """
+        Format a frequency string corresponding to the group.
 
         For use with xarray's resampling functions.
         """
@@ -183,7 +189,8 @@ class Grouper(Parametrizable):
         return "year" if self.prop == "group" else self.prop
 
     def get_coordinate(self, ds: xr.Dataset | None = None) -> xr.DataArray:
-        """Return the coordinate as in the output of group.apply.
+        """
+        Return the coordinate as in the output of group.apply.
 
         Currently, only implemented for groupings with prop == `month` or `dayofyear`.
         For prop == `dayfofyear`, a ds (Dataset or DataArray) can be passed to infer
@@ -218,7 +225,8 @@ class Grouper(Parametrizable):
         main_only: bool = False,
         **das: xr.DataArray,
     ) -> xr.core.groupby.GroupBy:  # pylint: disable=no-member
-        """Return a xr.core.groupby.GroupBy object.
+        """
+        Return a xr.core.groupby.GroupBy object.
 
         More than one array can be combined to a dataset before grouping using the `das` kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
@@ -271,7 +279,8 @@ class Grouper(Parametrizable):
         da: xr.DataArray | xr.Dataset,
         interp: bool | None = None,
     ) -> xr.DataArray:
-        """Return the group index of each element along the main dimension.
+        """
+        Return the group index of each element along the main dimension.
 
         Parameters
         ----------
@@ -298,21 +307,39 @@ class Grouper(Parametrizable):
             return da[self.dim].rename("group")
 
         ind = da.indexes[self.dim]
-        if self.prop == "week":
-            i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
-        elif self.prop == "season":
-            i = da[self.dim].copy(data=ind.month % 12 // 3)
+
+        if interp and self.dim == "time":
+            if self.prop == "month":
+                i = ind.month - 0.5 + ind.day / ind.days_in_month
+
+            elif self.prop == "season":
+                calendar = ind.calendar if hasattr(ind, "calendar") else "standard"
+                length_year = (
+                    360
+                    if calendar == "360_day"
+                    else 365 + (0 if calendar == "noleap" else ind.is_leap_year)
+                )
+                # This is assuming that seasons have the same length. The factor 1/6 comes from the fact that
+                # the first season is shifted by 1 month the but the middle of the season is shifted in the other direction
+                # by half a month so -(1/12-1/24)*4 = -1/6
+                i = ind.dayofyear / length_year * 4 - 1 / 6
+            else:
+                raise ValueError(
+                    f"Interpolation is not supported for {self.dim}.{self.prop}."
+                )
         else:
-            i = getattr(ind, self.prop)
+            if self.prop == "week":
+                i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
+            elif self.prop == "season":
+                i = da[self.dim].copy(data=ind.month % 12 // 3)
+            else:
+                i = getattr(ind, self.prop)
 
-        if not np.issubdtype(i.dtype, np.integer):
-            raise ValueError(
-                f"Index {self.name} is not of type int (rather {i.dtype}), "
-                f"but {self.__class__.__name__} requires integer indexes."
-            )
-
-        if interp and self.dim == "time" and self.prop == "month":
-            i = ind.month - 0.5 + ind.day / ind.days_in_month
+            if not np.issubdtype(i.dtype, np.integer):
+                raise ValueError(
+                    f"Index {self.name} is not of type int (rather {i.dtype}), "
+                    f"but {self.__class__.__name__} requires integer indexes."
+                )
 
         xi = xr.DataArray(
             i,
@@ -334,7 +361,8 @@ class Grouper(Parametrizable):
         main_only: bool = False,
         **kwargs,
     ) -> xr.DataArray | xr.Dataset:
-        r"""Apply a function group-wise on DataArrays.
+        r"""
+        Apply a function group-wise on DataArrays.
 
         Parameters
         ----------
@@ -447,7 +475,8 @@ class Grouper(Parametrizable):
 
 
 def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
-    """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
+    """
+    Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
     It can also be called with a function from which extract the default group and kwargs to update,
@@ -516,7 +545,8 @@ def _decode_cf_coords(ds: xr.Dataset):
 def map_blocks(  # noqa: C901
     reduces: Sequence[str] | None = None, **out_vars
 ) -> Callable:
-    r"""Decorator for declaring functions and wrapping them into a map_blocks.
+    r"""
+    Decorator for declaring functions and wrapping them into a map_blocks.
 
     Takes care of constructing the template dataset. Dimension order is not preserved.
     The decorated function must always have the signature: ``func(ds, **kwargs)``, where ds is a DataArray or a Dataset.
@@ -675,14 +705,6 @@ def map_blocks(  # noqa: C901
                 # duck empty calls dask if chunks is not None
                 tmpl[var] = duck_empty(dims, sizes, dtype=dtype, chunks=chunks)
 
-            if OPTIONS[SDBA_ENCODE_CF]:
-                ds = ds.copy()
-                # Optimization to circumvent the slow pickle.dumps(cftime_array)
-                # List of the keys to avoid changing the coords dict while iterating over it.
-                for crd in list(ds.coords.keys()):
-                    if xr.core.common._contains_cftime_datetimes(ds[crd].variable):
-                        ds[crd] = xr.conventions.encode_cf_variable(ds[crd].variable)
-
             def _call_and_transpose_on_exit(dsblock, **f_kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the template."""
                 try:
@@ -731,7 +753,8 @@ def map_blocks(  # noqa: C901
 def map_groups(
     reduces: Sequence[str] | None = None, main_only: bool = False, **out_vars
 ) -> Callable:
-    r"""Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
+    r"""
+    Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
 
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default
     value of `reduces` is changed.
@@ -783,7 +806,8 @@ def map_groups(
 
 # XC: core.utils
 def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
-    r"""Ensure that the input DataArray has chunks of at least the given size.
+    r"""
+    Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
     If many chunks are too small, they are grouped together by merging adjacent chunks.
@@ -836,7 +860,8 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
 
 # XC: core.utils
 def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
-    r"""Evaluate whether dask is installed and array is loaded as a dask array.
+    r"""
+    Evaluate whether dask is installed and array is loaded as a dask array.
 
     Parameters
     ----------
@@ -862,7 +887,8 @@ def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
 
 # XC: core
 def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
-    """Get python's comparing function according to its name of representation and validate allowed usage.
+    """
+    Get python's comparing function according to its name of representation and validate allowed usage.
 
     Parameters
     ----------
@@ -899,7 +925,8 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
 def _interpolate_doy_calendar(
     source: xr.DataArray, doy_max: int, doy_min: int = 1
 ) -> xr.DataArray:
-    """Interpolate from one set of dayofyear range to another.
+    """
+    Interpolate from one set of dayofyear range to another.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -940,7 +967,8 @@ def _interpolate_doy_calendar(
 
 # XC: calendar
 def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
-    """Parse an offset string.
+    """
+    Parse an offset string.
 
     Parse a frequency offset and, if needed, convert to cftime-compatible components.
 
@@ -981,7 +1009,8 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
 
 # XC : calendar
 def compare_offsets(freqA: str, op: str, freqB: str) -> bool:
-    """Compare offsets string based on their approximate length, according to a given operator.
+    """
+    Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
     after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
@@ -1019,7 +1048,8 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:
 
 # XC: calendar
 def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
-    """Reconstruct an offset string from its parts.
+    """
+    Reconstruct an offset string from its parts.
 
     Parameters
     ----------
@@ -1086,7 +1116,8 @@ def stack_periods(
     align_days: bool = True,
     pad_value=dtypes.NA,
 ):
-    """Construct a multi-period array.
+    """
+    Construct a multi-period array.
 
     Stack different equal-length periods of `da` into a new 'period' dimension.
 
@@ -1134,8 +1165,8 @@ def stack_periods(
         Passed directly as argument ``fill_value`` to :py:func:`xarray.concat`,
         the default is the same as on that function.
 
-    Return
-    ------
+    Returns
+    -------
     xr.DataArray
         A DataArray with a new `period` dimension and a `time` dimension with the length of the longest window.
         The new time coordinate has the same frequency as the input data but is generated using
@@ -1295,7 +1326,8 @@ def stack_periods(
 
 # XC: calendar
 def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
-    """Unstack an array constructed with :py:func:`stack_periods`.
+    """
+    Unstack an array constructed with :py:func:`stack_periods`.
 
     Can only work with periods stacked with a ``stride`` that divides ``window`` in an odd number of sections.
     When ``stride`` is smaller than ``window``, only the center-most stride of each window is kept,

@@ -16,11 +16,15 @@ Changes
     * Now using advanced CodeQL configuration.
     * New pre-commit hooks for `vulture` (find dead code), `codespell` (grammatical errors), `zizmor` (workflow security), and `gitleaks` (token commit prevention).
     * Corrected some minor spelling and security issues.
+* Added `upstream` testing to the CI pipeline for both daily and push events. (:pull:`61`).
+* Import last changes in xclim before the embargo (:pull:`80`).
 
 Fixes
 ^^^^^
 * Gave credits to the package to all previous contributors of ``xclim.sdba`` (:issue:`58`, :pull:`59`).
+* Pin `sphinx-codeautolink` to fix ReadTheDocs and correct some docs errors (:pull:`40`).
 * Removed reliance on the `netcdf4` package for testing purposes. The `h5netcdf` engine is now used for file IO operations. (:pull:`71`).
+* Changes to reflect the change of library name `xsdba` (:pull:`72`)
 
 .. _changes_0.2.0:
 
@@ -34,7 +38,7 @@ Changes
 * Split `sdba` from `xclim` into its own standalone package. Where needed, some common functionalities were duplicated: (:pull:`8`)
     * ``xsdba.units`` is an adaptation of the ``xclim.core.units`` modules.
     * Many functions and definitions found in ``xclim.core.calendar`` have been adapted to ``xsdba.base``.
-* Dependencies have been updated to reflect the new package structure. (:pull:`45`)
+* Dependencies have been updated to reflect the new package structure. (:pull:`45`).
 * Updated documentation configuration: (:pull:`46`)
     * Significant improvements to the documentation content and layout.
     * Now using the `furo` theme for `sphinx`.

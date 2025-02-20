@@ -1,5 +1,6 @@
 # pylint: disable=missing-kwoa
-"""# noqa: SS01
+"""
+# noqa: SS01
 Pre- and Post-Processing Submodule
 ==================================
 """
@@ -116,11 +117,8 @@ def adapt_freq(
 
 
 def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
-    """Replace values smaller than threshold by a uniform random noise.
-
-    Warnings
-    --------
-    Not to be confused with R's jitter, which adds uniform noise instead of replacing values.
+    """
+    Replace values smaller than threshold by a uniform random noise.
 
     Parameters
     ----------
@@ -133,6 +131,10 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
     -------
     xr.DataArray.
 
+    Warnings
+    --------
+    Not to be confused with R's jitter, which adds uniform noise instead of replacing values.
+
     Notes
     -----
     If thresh is high, this will change the mean value of x.
@@ -142,11 +144,8 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
 
 
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataArray:
-    """Replace values greater than threshold by a uniform random noise.
-
-    Warnings
-    --------
-    Not to be confused with R's jitter, which adds uniform noise instead of replacing values.
+    """
+    Replace values greater than threshold by a uniform random noise.
 
     Parameters
     ----------
@@ -160,6 +159,10 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataA
     Returns
     -------
     xr.DataArray.
+
+    Warnings
+    --------
+    Not to be confused with R's jitter, which adds uniform noise instead of replacing values.
 
     Notes
     -----
@@ -180,11 +183,8 @@ def jitter(
     minimum: str | None = None,
     maximum: str | None = None,
 ) -> xr.DataArray:
-    """Replace values under a threshold and values above another by a uniform random noise.
-
-    Warnings
-    --------
-    Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
+    """
+    Replace values under a threshold and values above another by a uniform random noise.
 
     Parameters
     ----------
@@ -209,8 +209,11 @@ def jitter(
         Same as  `x` but values < lower are replaced by a uniform noise in range (minimum, lower)
         and values >= upper are replaced by a uniform noise in range [upper, maximum).
         The two noise distributions are independent.
+
+    Warnings
+    --------
+    Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
     """
-    # with units.context(infer_context(x.attrs.get("standard_name"))):
     out: xr.DataArray = x
     notnull = x.notnull()
     if lower is not None:
@@ -254,7 +257,8 @@ def normalize(
     group: Grouper | str,
     kind: str = ADDITIVE,
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Normalize an array by removing its mean.
+    """
+    Normalize an array by removing its mean.
 
     Normalization if performed group-wise and according to `kind`.
 
@@ -291,7 +295,8 @@ def normalize(
 def uniform_noise_like(
     da: xr.DataArray, low: float = 1e-6, high: float = 1e-3
 ) -> xr.DataArray:
-    """Return a uniform noise array of the same shape as da.
+    """
+    Return a uniform noise array of the same shape as da.
 
     Noise is uniformly distributed between low and high.
     Alternative method to `jitter_under_thresh` for avoiding zeroes.
@@ -317,7 +322,8 @@ def standardize(
     std: xr.DataArray | None = None,
     dim: str = "time",
 ) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray, xr.DataArray]:
-    """Standardize a DataArray by centering its mean and scaling it by its standard deviation.
+    """
+    Standardize a DataArray by centering its mean and scaling it by its standard deviation.
 
     Either of both of mean and std can be provided if need be.
 
@@ -349,7 +355,8 @@ def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
 
 @update_xsdba_history
 def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.Dataset:
-    """Reorder data in `sim` following the order of ref.
+    """
+    Reorder data in `sim` following the order of ref.
 
     The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time", optionally doing the
     operation group-wise.
@@ -386,7 +393,8 @@ def escore(
     N: int = 0,
     scale: bool = False,
 ) -> xr.DataArray:
-    r"""Energy score, or energy dissimilarity metric, based on :cite:t:`szekely_testing_2004` and :cite:t:`cannon_multivariate_2018`.
+    r"""
+    Energy score, or energy dissimilarity metric, based on :cite:t:`szekely_testing_2004` and :cite:t:`cannon_multivariate_2018`.
 
     Parameters
     ----------
@@ -476,7 +484,8 @@ def escore(
 
 
 def _get_number_of_elements_by_year(time):
-    """Get the number of elements in time in a year by inferring its sampling frequency.
+    """
+    Get the number of elements in time in a year by inferring its sampling frequency.
 
     Only calendar with uniform year lengths are supported : 360_day, noleap, all_leap.
     """
@@ -500,7 +509,8 @@ def to_additive_space(
     upper_bound: str | None = None,
     trans: str = "log",
 ):
-    r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
+    r"""
+    Transform a non-additive variable into an additive space by the means of a log or logit transformation.
 
     Based on :cite:t:`alavoine_distinct_2022`.
 
@@ -517,6 +527,12 @@ def to_additive_space(
         The data should only have values strictly smaller than this bound.
     trans : {'log', 'logit'}
         The transformation to use. See notes.
+
+    See Also
+    --------
+    from_additive_space : For the inverse transformation.
+    jitter_under_thresh : Remove values exactly equal to the lower bound.
+    jitter_over_thresh : Remove values exactly equal to the upper bound.
 
     Notes
     -----
@@ -547,17 +563,10 @@ def to_additive_space(
     This will thus produce `Infinity` and `NaN` values where :math:`X == b_-` or :math:`X == b_+`.
     We recommend using :py:func:`jitter_under_thresh` and :py:func:`jitter_over_thresh` to remove those issues.
 
-    See Also
-    --------
-    from_additive_space : For the inverse transformation.
-    jitter_under_thresh : Remove values exactly equal to the lower bound.
-    jitter_over_thresh : Remove values exactly equal to the upper bound.
-
     References
     ----------
     :cite:cts:`alavoine_distinct_2022`.
     """
-    # with units.context(infer_context(data.attrs.get("standard_name"))):
     lower_bound_array = np.array(lower_bound).astype(float)
     if upper_bound is not None:
         upper_bound_array = np.array(upper_bound).astype(float)
@@ -593,7 +602,8 @@ def from_additive_space(
     trans: str | None = None,
     units: str | None = None,
 ):
-    r"""Transform back to the physical space a variable that was transformed with `to_additive_space`.
+    r"""
+    Transform back to the physical space a variable that was transformed with `to_additive_space`.
 
     Based on :cite:t:`alavoine_distinct_2022`.
     If parameters are not present on the attributes of the data, they must be all given are arguments.
@@ -625,6 +635,10 @@ def from_additive_space(
         Except units which are taken from `xsdba_transform_units` if available.
         All `xsdba_transform*` attributes are deleted.
 
+    See Also
+    --------
+    to_additive_space : For the original transformation.
+
     Notes
     -----
     Given a variable that is not usable in an additive adjustment, :py:func:`to_additive_space` applied a transformation
@@ -644,10 +658,6 @@ def from_additive_space(
 
             X' = \frac{1}{1 + e^{-Y}}
             X = X * (b_+ - b_-) + b_-
-
-    See Also
-    --------
-    to_additive_space : For the original transformation.
 
     References
     ----------
@@ -708,7 +718,8 @@ def from_additive_space(
 
 
 def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar"):
-    """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
+    """
+    Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
     Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
     Variables are concatenated in the new dimension in alphabetical order, to ensure
@@ -758,7 +769,8 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
 
 
 def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
-    """Unstack a DataArray created by `stack_variables` to a dataset.
+    """
+    Unstack a DataArray created by `stack_variables` to a dataset.
 
     Parameters
     ----------
@@ -799,7 +811,8 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
 
 
 def grouped_time_indexes(times, group):
-    """Time indexes for every group blocks
+    """
+    Time indexes for every group blocks
 
     Time indexes can be used to implement a pseudo-"numpy.groupies" approach to grouping.
 

@@ -1,5 +1,6 @@
 # pylint: disable=missing-kwoa
-"""# noqa: SS01
+"""
+# noqa: SS01
 Properties Submodule
 ====================
 SDBA diagnostic tests are made up of statistical properties and measures. Properties are calculated on both simulation
@@ -39,7 +40,8 @@ from xsdba.utils import _pairwise_spearman, copy_all_attrs
 
 
 class StatisticalProperty(Indicator):
-    """Base indicator class for statistical properties used for validating bias-adjusted outputs.
+    """
+    Base indicator class for statistical properties used for validating bias-adjusted outputs.
 
     Statistical properties reduce the time dimension, sometimes adding a grouping dimension
     according to the passed value of `group` (e.g.: group='time.month' means the loss of the
@@ -115,7 +117,8 @@ base_registry["StatisticalProperty"] = StatisticalProperty
 
 @parse_group
 def _mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
-    """Mean.
+    """
+    Mean.
 
     Mean over all years at the time resolution.
 
@@ -149,7 +152,8 @@ mean = StatisticalProperty(
 
 @parse_group
 def _var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
-    """Variance.
+    """
+    Variance.
 
     Variance of the variable over all years at the time resolution.
 
@@ -185,7 +189,8 @@ var = StatisticalProperty(
 
 @parse_group
 def _std(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
-    """Standard Deviation.
+    """
+    Standard Deviation.
 
     Standard deviation of the variable over all years at the time resolution.
 
@@ -221,7 +226,8 @@ std = StatisticalProperty(
 
 @parse_group
 def _skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
-    """Skewness.
+    """
+    Skewness.
 
     Skewness of the distribution of the variable over all years at the time resolution.
 
@@ -264,7 +270,8 @@ skewness = StatisticalProperty(
 def _quantile(
     da: xr.DataArray, *, q: float = 0.98, group: str | Grouper = "time"
 ) -> xr.DataArray:
-    """Quantile.
+    """
+    Quantile.
 
     Returns the quantile q of the distribution of the variable over all years at the time resolution.
 
@@ -307,7 +314,8 @@ def _spell_length_distribution(
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
 ) -> xr.DataArray:
-    """Spell length distribution.
+    """
+    Spell length distribution.
 
     Statistic of spell length distribution when the variable respects a condition (defined by an operation, a method and
      a threshold).
@@ -433,7 +441,8 @@ def _threshold_count(
     stat_resample: str | None = None,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Correlation between two variables.
+    r"""
+    Correlation between two variables.
 
     Spearman or Pearson correlation coefficient between two variables at the time resolution.
 
@@ -491,7 +500,8 @@ threshold_count = StatisticalProperty(
 def _acf(
     da: xr.DataArray, *, lag: int = 1, group: str | Grouper = "time.season"
 ) -> xr.DataArray:
-    """Autocorrelation.
+    """
+    Autocorrelation.
 
     Autocorrelation with a lag over a time resolution and averaged over all years.
 
@@ -562,7 +572,8 @@ def _annual_cycle(
     window: int = 31,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Annual cycle statistics.
+    r"""
+    Annual cycle statistics.
 
     A daily climatology is calculated and optionally smoothed with a (circular) moving average.
     The requested statistic is returned.
@@ -693,7 +704,8 @@ def _annual_statistic(
     window: int = 31,
     group: str | Grouper = "time",
 ):
-    """Annual range statistics.
+    """
+    Annual range statistics.
 
     Compute a statistic on each year of data and return the interannual average. This is similar
     to the annual cycle, but with the statistic and average operations inverted.
@@ -773,7 +785,8 @@ def _corr_btw_var(
     group: str | Grouper = "time",
     output: str = "correlation",
 ) -> xr.DataArray:
-    r"""Correlation between two variables.
+    r"""
+    Correlation between two variables.
 
     Spearman or Pearson correlation coefficient between two variables at the time resolution.
 
@@ -856,7 +869,8 @@ def _bivariate_spell_length_distribution(
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
 ) -> xr.DataArray:
-    """Spell length distribution with bivariate condition.
+    """
+    Spell length distribution with bivariate condition.
 
     Statistic of spell length distribution when two variables respect individual conditions (defined by an operation, a method,
     and a threshold).
@@ -962,8 +976,7 @@ def _bivariate_spell_length_distribution(
     threshs = [thresh1, thresh2]
     for i, da in enumerate([da1, da2]):
         if methods[i] == "amount":
-            # ADAPT: will this work?
-            threshs[i] = convert_units_to(threshs[i], da)  # , context="infer")
+            threshs[i] = convert_units_to(threshs[i], da)
         elif methods[i] != "quantile":
             raise ValueError(
                 f"{methods[i]} is not a valid method. Choose 'amount' or 'quantile'."
@@ -1011,7 +1024,8 @@ def _bivariate_threshold_count(
     stat_resample: str | None = None,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    """Count the number of time steps where two variables respect given conditions.
+    """
+    Count the number of time steps where two variables respect given conditions.
 
     Statistic of number of time steps when two variables respect individual conditions (defined by an operation, a method,
     and a threshold).
@@ -1095,7 +1109,8 @@ def _relative_frequency(
     thresh: str = "1 mm d-1",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    """Relative Frequency.
+    """
+    Relative Frequency.
 
     Relative Frequency of days with variable respecting a condition (defined by an operation and a threshold) at the
     time resolution. The relative frequency is the number of days that satisfy the condition divided by the total number
@@ -1125,7 +1140,7 @@ def _relative_frequency(
     if op not in allowed_ops:
         raise ValueError(f"`op` must be in {allowed_ops}, but {op} was given.")
 
-    t = convert_units_to(thresh, da)  # , context="infer")
+    t = convert_units_to(thresh, da)
     length = da.sizes[group.dim]
     cond = compare(da, op, t)
     if group.prop != "group":  # change the time resolution if necessary
@@ -1155,7 +1170,8 @@ def _transition_probability(
     thresh: str = "1 mm d-1",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    """Transition probability.
+    """
+    Transition probability.
 
     Probability of transition from the initial state to the final state. The states are
     booleans comparing the value of the day to the threshold with the operator.
@@ -1189,7 +1205,7 @@ def _transition_probability(
     today = da.isel(time=slice(0, -1))
     tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
 
-    t = convert_units_to(thresh, da)  # , context="infer")
+    t = convert_units_to(thresh, da)
     cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
     out = group.apply("mean", cond)
     out = out.where(mask, np.nan)
@@ -1211,7 +1227,8 @@ def _trend(
     group: str | Grouper = "time",
     output: str = "slope",
 ) -> xr.DataArray:
-    """Linear Trend.
+    """
+    Linear Trend.
 
     The data is averaged over each time resolution and the inter-annual trend is returned.
     This function will rechunk along the grouping dimension.
@@ -1281,7 +1298,8 @@ def _return_value(
     method: str = "ML",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Return value.
+    r"""
+    Return value.
 
     Return the value corresponding to a return period. On average, the return value will be exceeded
     (or not exceed for op='min') every return period (e.g. 20 years). The return value is computed by first extracting
@@ -1336,7 +1354,8 @@ def _spatial_correlogram(
     group: str = "time",
     method: int = 1,
 ):
-    """Spatial correlogram.
+    """
+    Spatial correlogram.
 
     Compute the pairwise spatial correlations (Spearman) and averages them based on the pairwise distances.
     This collapses the spatial and temporal dimensions and returns a distance bins dimension.
@@ -1436,7 +1455,8 @@ def _decorrelation_length(
     bins: int = 100,
     group: xr.Coordinate | str | None = "time",  # FIXME: this needs to be clarified
 ):
-    """Decorrelation length.
+    """
+    Decorrelation length.
 
     Distance from a grid cell where the correlation with its neighbours goes below the threshold.
     A correlogram is calculated for each grid cell following the method from
@@ -1572,7 +1592,8 @@ decorrelation_length = StatisticalProperty(
 
 
 def first_eof():
-    """EOF Statistical Property (function removed).
+    """
+    EOF Statistical Property (function removed).
 
     Warnings
     --------
