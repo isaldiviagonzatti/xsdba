@@ -1613,7 +1613,8 @@ def _lambda_to_alpha(
     lam: xr.DataArray | str,
     delta: str | None = None,
 ) -> xr.DataArray | float:
-    """Convert lambda (wavelength) to alpha (normalized wavenumber)
+    """
+    Convert lambda (wavelength) to alpha (normalized wavenumber)
 
     Parameters
     ----------
@@ -1636,7 +1637,8 @@ def _lambda_to_alpha(
 def _alpha_to_lambda(
     alpha: xr.DataArray | float, delta: str | None = None, out_units: str | None = None
 ) -> xr.DataArray | str:
-    """Convert alpha (normalized wavenumber) to lambda (wavelength)
+    """
+    Convert alpha (normalized wavenumber) to lambda (wavelength)
 
     Parameters
     ----------
@@ -1711,7 +1713,8 @@ def _compute_variance_alpha(da, dims):
 
 
 def compute_variance(da, dims, delta=None):
-    r"""Compute spectral variance
+    r"""
+    Compute spectral variance
 
     If `delta` is specified, the normalized wavenumber `alpha` will be converted to a `wavelength`
 
