@@ -1588,7 +1588,7 @@ def first_eof():
 
 
 # Spectral utils
-def lambda_to_alpha(
+def _lambda_to_alpha(
     lam: xr.DataArray | str,
     delta: str | None = None,
 ) -> xr.DataArray | float:
@@ -1612,7 +1612,7 @@ def lambda_to_alpha(
     return alpha
 
 
-def alpha_to_lambda(
+def _alpha_to_lambda(
     alpha: xr.DataArray | float, delta: str | None = None, out_units: str | None = None
 ) -> xr.DataArray | str:
     """Convert alpha (normalized wavenumber) to lambda (wavelength)
@@ -1636,7 +1636,7 @@ def alpha_to_lambda(
     return lam
 
 
-def compute_alpha(da, dims):
+def _compute_alpha(da, dims):
     r"""
     If :math:`i,j` are respectively wavenumbers of the discrete cosine transform along longitude and latitude
     respectively, with :math:`N_i,N_j` being the total number of grid points along longitude and latitude, :math:`\alpha`
@@ -1666,7 +1666,7 @@ def _idctn(x):
     return sc.fft.idctn(x, norm="ortho")
 
 
-def compute_variance_alpha(da, dims):
+def _compute_variance_alpha(da, dims):
     """Go deeper in the fun"""
     # compute variance as a function of alpha
     Fmn = xr.apply_ufunc(
@@ -1681,17 +1681,16 @@ def compute_variance_alpha(da, dims):
     sizes = [da[d].size for d in dims]
     # \sigma = \sum_{m,n} F_{m,n} / (M*N)
     sigmn = (1 / np.prod(sizes)) * (Fmn**2)
-    sigmn["alpha"] = compute_alpha(da.copy(), dims)
+    sigmn["alpha"] = _compute_alpha(da.copy(), dims)
 
     # eq.13 and 14 of [Côté et al, 2002]
     # alpha should increase in integer steps of 1/min(N_i,N_j)
     sigmn["alpha"] = (sigmn["alpha"] // (1 / min(sizes))) * (1 / min(sizes))
-    # return sigmn.groupby("alpha").mean()
     return sigmn.groupby("alpha").sum()
 
 
 def compute_variance(da, dims, delta=None):
-    r"""Compute spectral variance of `da`
+    r"""Compute spectral variance
 
     If `delta` is specified, the normalized wavenumber `alpha` will be converted to a `wavelength`
 
@@ -1705,10 +1704,10 @@ def compute_variance(da, dims, delta=None):
         Should be a string with units, e.g. `delta=="55.5 km"`. This converts `alpha` to `wavelength`,
         with :math:`\\lambda = 2\\Delta/\alpha`. `delta` should be the nominal resolution of the grid.
     """
-    var = compute_variance_alpha(da, dims)
+    var = _compute_variance_alpha(da, dims)
     var = var.where((var.alpha > 0) & (var.alpha <= 1), drop=True)
     if delta is not None:
-        var = var.assign_coords(alpha=alpha_to_lambda(var.alpha, delta=delta)).rename(
+        var = var.assign_coords(alpha=_alpha_to_lambda(var.alpha, delta=delta)).rename(
             {"alpha": "wavelength"}
         )
         _, u = _parse_str(delta)
@@ -1725,14 +1724,14 @@ def compute_variance(da, dims, delta=None):
 
 def _make_filter(template_filter, cond_vals):
     """
-    Create a filter based on the input data array and condition values.
+    Create a filter used to mask Fourier coefficients
 
     Parameters
     ----------
     template_filter: xr.DataArray
         Array with the dimensions we want to filter.
     cond_vals: tuple
-        The list of (condition, value) pairs.
+        The list of (condition, value) pairs applied to create the mask.
 
     Returns
     -------
@@ -1757,44 +1756,17 @@ def _cos2_filter_f(da, al1, al2):
     return _make_filter(da, cond_vals)
 
 
-def __dctn_filter(arr, filter):
+def _dctn_filter(arr, filter):
     coeffs = _dctn(arr)
     return _idctn(coeffs * filter)
 
 
-def _dctn_filter(da, filter_func, filter_func_kwargs, dims):
-    if filter_func_kwargs["al2"] > 1:
-        raise ValueError(
-            f"al2 should be equal or smaller to 1, got {filter_func_kwargs['al2']}"
-        )
-    alpha = compute_alpha(da, dims)
-    filter = filter_func(alpha, **filter_func_kwargs)
-    out = xr.apply_ufunc(
-        __dctn_filter,
-        da,
-        filter,
-        input_core_dims=[dims, dims],
-        output_core_dims=[dims],
-        vectorize=True,
-        dask="parallelized",
-        dask_gufunc_kwargs={"allow_rechunk": True},
-    ).assign_attrs(da.attrs)
-    out = out.assign_attrs(
-        {
-            "filter_bounds": (filter_func_kwargs["al1"], filter_func_kwargs["al2"]),
-            "filter_func": filter_func.__name__,
-        }
-    )
-
-    return out
-
-
-def dctn_cos2_filter(da, lam_low, lam_high, dims, delta=None):
+def dctn_filter(da, filter_func, lam_low, lam_high, dims, delta=None):
     """Start the fun here."""
     if isinstance(da, xr.Dataset):
         out = da.copy()
         for v in da.data_vars:
-            out[v] = dctn_cos2_filter(da[v], lam_low, lam_high, dims, delta=delta)
+            out[v] = dctn_filter(da[v], lam_low, lam_high, dims, delta=delta)
         return out.assign_attrs(da.attrs)
     if delta is None:
         if "rlat" in da.dims:
@@ -1803,12 +1775,12 @@ def dctn_cos2_filter(da, lam_low, lam_high, dims, delta=None):
             lat = da.lat
         # crappy or good approx?
         delta = f"{(lat[1] - lat[0]) * 111} km"
-    al1 = lambda_to_alpha(lam_low, delta=delta)
-    al2 = lambda_to_alpha(lam_high, delta=delta)
-    alpha = compute_alpha(da, dims)
-    filter = _cos2_filter_f(alpha, al1, al2)
+    al1 = _lambda_to_alpha(lam_low, delta=delta)
+    al2 = _lambda_to_alpha(lam_high, delta=delta)
+    alpha = _compute_alpha(da, dims)
+    filter = filter_func(alpha, al1, al2)
     out = xr.apply_ufunc(
-        __dctn_filter,
+        _dctn_filter,
         da,
         filter,
         input_core_dims=[dims, dims],
@@ -1819,9 +1791,13 @@ def dctn_cos2_filter(da, lam_low, lam_high, dims, delta=None):
     ).assign_attrs(da.attrs)
     out = out.assign_attrs(
         {
-            "filter_bounds": (lam_low, lam_high),
-            "filter_func": _cos2_filter_f.__name__,
+            "filter_bounds": (al1, al2),
+            "filter_func": filter_func.__name__,
         }
     )
-
     return out
+
+
+def dctn_cost2_filter(da, lam_low, lam_high, dims, delta=None):
+    """More specific fun."""
+    return dctn_filter(da, _cos2_filter_f, lam_low, lam_high, dims, delta)
