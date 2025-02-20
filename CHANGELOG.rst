@@ -7,6 +7,10 @@ Changelog
 
 Contributors: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
 
+Announcements
+^^^^^^^^^^^^^
+* `xsdba` is now available as a package on the Anaconda `conda-forge` channel.
+
 Changes
 ^^^^^^^
 * Remove the units registry declaration and instead use whatever is set as pint's application registry.
@@ -18,6 +22,7 @@ Changes
     * Corrected some minor spelling and security issues.
 * Added `upstream` testing to the CI pipeline for both daily and push events. (:pull:`61`).
 * Import last changes in xclim before the embargo (:pull:`80`).
+* `xsdba` has begun the process of adoption of the OpenSSF Best Practices checklist.
 
 Fixes
 ^^^^^
