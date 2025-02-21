@@ -11,9 +11,9 @@ dependencies:
 - nbsphinx >=0.9.5
 - nc-time-axis >=1.4.1
 - pooch >=1.8.0
-- sphinx >=7.1.0,<8.2.0 # temporary pin for sphinx-autodoc-typehints support
+- sphinx >=7.1.0
 - sphinx-autobuild >=2024.4.16
-- sphinx-autodoc-typehints
+- sphinx-autodoc-typehints >=3.1.0
 - sphinx-codeautolink >=0.16.2
 - sphinx-copybutton
 - sphinx-intl
