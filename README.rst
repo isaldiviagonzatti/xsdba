@@ -49,13 +49,13 @@ How to make the most of `xsdba`: `Basic Usage Examples`_ and `In-Depth Examples`
 
 XClim migration guide
 ---------------------
-
 `xsdba` was first developed as a submodule of ![`xclim`](https://xclim.readthedocs.io/). The reason of the split was twofold
 
 * `xsdba` grew as a heavy submodule within `xclim` with different aim;
 * To increase collaboration with other consortiums, we want more flexibility (i.e. this will break more often)
 
 For `xclim` users, it will still be possible to import `sdba` if `xsdba` is installed.
+
 ```python
 from xclim import sdba
 ```
@@ -65,12 +65,12 @@ methods. This included conversions units with different dimensionality in cases 
 unambiguous (e.g. precipitations in `kg m-2 s-1` could be converted `mm d-1` by assuming the density of liquid water). This kind
 of conversion is no longer present in `xsdba`. However, it is possible, if `xclim` is installed, to emulate the previous behaviour,
 e.g.
+
 ```python
 with xclim.core.units.units.context("hydro"):
         QM = xsdba.EmpiricalQuantileMapping.train(ref=pr_ref, hist=pr_hist, adapt_freq_thresh="0.1 mm/d", jitter_under_thresh_value="0.01 mm/d")
         pr_adj = QM.adjust(sim=pr_sim)
 ```
-
 
 Credits
 -------
