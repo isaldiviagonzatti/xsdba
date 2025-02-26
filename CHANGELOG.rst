@@ -23,6 +23,7 @@ Changes
 * Added `upstream` testing to the CI pipeline for both daily and push events. (:pull:`61`).
 * Import last changes in xclim before the embargo (:pull:`80`).
 * `xsdba` has begun the process of adoption of the OpenSSF Best Practices checklist. (:pull:`82`).
+* `xclim` migration guide added. (:issue:`62`, :pull:`86`).
 
 Fixes
 ^^^^^
