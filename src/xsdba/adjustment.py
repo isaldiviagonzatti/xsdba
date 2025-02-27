@@ -1770,7 +1770,7 @@ class MBCn(TrainAdjust):
 
     Notes
     -----
-    * The grouping of time dimensions is passed through `base_kws`. Three types of grouping are allowed:      * "time" or `xsdba.Grouper("time")
+    * The grouping of time dimensions is passed through `base_kws`. Three types of grouping are allowed: "time" or `xsdba.Grouper("time")
       "time.dayofyear"; `xsdba.Grouper("time.dayofyear", window); and `xsdba.Grouper("5D", window)`, where `window` must be an odd integer that
       counts the number of 5-day subgroups. The window moves in 5-day strides too. This last option is a specific option to `MBCn`.
     * The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
