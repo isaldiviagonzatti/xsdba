@@ -1912,14 +1912,14 @@ class MBCn(TrainAdjust):
 
         g_idxs, gw_idxs = grouped_time_indexes(ref.time, self.group)
         ds = self.ds.copy()
-        ds["g_idxs"] = g_idxs
-        ds["gw_idxs"] = gw_idxs
 
         # adjust (adjust for npft transform, train/adjust for univariate bias correction)
         out = mbcn_adjust(
             ref=ref,
             hist=hist,
             sim=sim,
+            g_idxs=g_idxs,
+            gw_idxs=gw_idxs,
             ds=ds,
             pts_dims=self.pts_dims,
             interp=self.interp,
