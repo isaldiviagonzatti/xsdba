@@ -25,6 +25,7 @@ Changes
 * `xsdba` has begun the process of adoption of the OpenSSF Best Practices checklist. (:pull:`82`).
 * `xclim` migration guide added. (:issue:`62`, :pull:`86`).
 * Add a missing `dOTC` example to documentation. (:pull:`86`).
+* Add a new grouping method specific for `MBCn` which called by passing `group=Grouper("5D", window=n)` where `n` is an odd positive integer. (:pull:`79`).
 
 Fixes
 ^^^^^
