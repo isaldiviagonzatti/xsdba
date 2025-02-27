@@ -73,7 +73,7 @@ dev = [
   "ruff >=0.9.0",
   "tox >=4.24.1",
   "watchdog >=4.0.0",
-  "xclim >= 0.53.2",
+  "xclim >= 0.55.1",
   "xdoctest>=1.1.5"
 ]
 docs = [
