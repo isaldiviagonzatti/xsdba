@@ -23,9 +23,13 @@ Changelog
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
+Changes
+^^^^^^^
+* Added `POT` to the development dependencies. (:pull:`96`).
+
 Fixes
 ^^^^^
-* Adjusted the documentation dependencies and the `sphinx` configuration to fix the ReadTheDocs build. (:pull:`90`).
+* Adjusted the documentation dependencies and the `sphinx` configuration to fix the ReadTheDocs build. (:pull:`96`).
 
 .. _changes_0.3.0:
 
