@@ -17,6 +17,7 @@ from xsdba.adjustment import (
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
+    dOTC,
 )
 from xsdba.base import Grouper, stack_periods
 from xsdba.options import set_options
@@ -1082,29 +1083,38 @@ class TestdOTC:
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
 
-    def test_shape(self, random, timelonlatseries):
+    def test_shape(self, timelonlatseries):
+        attrs_tas = {"units": "K"}
 
         pytest.importorskip("ot")
         # `sim` has a different time than `ref,hist` (but same size)
         ref = xr.merge(
             [
-                tasmax_series(np.arange(730).astype(float), start="2000-01-01").chunk(
-                    {"time": -1}
-                ),
-                tasmin_series(np.arange(730).astype(float), start="2000-01-01").chunk(
-                    {"time": -1}
-                ),
+                timelonlatseries(
+                    np.arange(730).astype(float), start="2000-01-01", attrs=attrs_tas
+                )
+                .chunk({"time": -1})
+                .to_dataset(name="tasmax"),
+                timelonlatseries(
+                    np.arange(730).astype(float), start="2000-01-01", attrs=attrs_tas
+                )
+                .chunk({"time": -1})
+                .to_dataset(name="tasmin"),
             ]
         )
         hist = ref.copy()
         sim = xr.merge(
             [
-                tasmax_series(np.arange(730).astype(float), start="2020-01-01").chunk(
-                    {"time": -1}
-                ),
-                tasmin_series(np.arange(730).astype(float), start="2020-01-01").chunk(
-                    {"time": -1}
-                ),
+                timelonlatseries(
+                    np.arange(730).astype(float), start="2020-01-01", attrs=attrs_tas
+                )
+                .chunk({"time": -1})
+                .to_dataset(name="tasmax"),
+                timelonlatseries(
+                    np.arange(730).astype(float), start="2020-01-01", attrs=attrs_tas
+                )
+                .chunk({"time": -1})
+                .to_dataset(name="tasmin"),
             ]
         )
         ref, hist, sim = (stack_variables(arr) for arr in [ref, hist, sim])
