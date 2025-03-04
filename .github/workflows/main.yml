@@ -72,7 +72,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          # - "3.13"
+          - "3.13"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
@@ -120,7 +120,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     defaults:
       run:
         shell: bash -l {0}
