@@ -22,11 +22,10 @@ dependencies:
 - pot >=0.9.4
 - xclim >=0.55.1
 # Dev tools and testing
-- black ==25.1.0
+- black >=25.1.0
 - blackdoc ==0.3.9
 - bump-my-version >=0.30.1
 - coverage >=7.5.0
-- coveralls >=4.0.1
 - flake8 >=7.1.1
 - flake8-rst-docstrings >=0.3.0
 - flit >=3.10.1,<4.0
