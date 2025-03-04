@@ -16,6 +16,21 @@ Changelog
     ^^^^^
     * No change.
 
+.. _changes_0.3.1:
+
+`v0.3.1 <https://github.com/Ouranosinc/xsdba/tree/0.3.1>`_ (2025-03-04)
+-----------------------------------------------------------------------
+
+Contributors: Trevor James Smith (:user:`Zeitsperre`).
+
+Changes
+^^^^^^^
+* Added `POT` to the development dependencies. (:pull:`96`).
+
+Fixes
+^^^^^
+* Adjusted the documentation dependencies and the `sphinx` configuration to fix the ReadTheDocs build. (:pull:`96`).
+
 .. _changes_0.3.0:
 
 `v0.3.0 <https://github.com/Ouranosinc/xsdba/tree/0.3.0>`_ (2025-03-04)
