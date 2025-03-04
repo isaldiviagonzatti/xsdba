@@ -19,6 +19,7 @@ dependencies:
 - xarray >=2023.11.0
 - yamale >=5.0.0
 # Extras
+- pot >=0.9.4
 - xclim >=0.55.1
 # Dev tools and testing
 - black ==25.1.0
