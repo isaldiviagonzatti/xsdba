@@ -66,7 +66,6 @@ dev = [
   "numpydoc >=1.8.0",
   "pip >=25.0",
   "pooch >=1.8.0",
-  "POT >=0.9.4",
   "pre-commit >=3.5.0",
   "pytest <9.0.0",
   "pytest-cov >=5.0.0",
@@ -74,7 +73,6 @@ dev = [
   "ruff >=0.9.0",
   "tox >=4.24.1",
   "watchdog >=4.0.0",
-  "xclim >= 0.55.1",
   "xdoctest>=1.1.5"
 ]
 docs = [
@@ -96,7 +94,11 @@ docs = [
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex"
 ]
-all = ["xsdba[dev]", "xsdba[docs]"]
+extras = [
+  "POT >=0.9.4",
+  "xclim >= 0.55.1"
+]
+all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]"]
 
 [project.scripts]
 xsdba = "xsdba.cli:app"
