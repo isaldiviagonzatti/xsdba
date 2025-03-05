@@ -149,6 +149,7 @@ jobs:
         with:
           cache-downloads: true
           cache-environment: true
+          cache-environment-key: conda-Python${{ matrix.python-version }}-${{ hashFiles('environment-dev.yml') }}
           environment-file: environment-dev.yml
           create-args: >-
             python=${{ matrix.python-version }}
