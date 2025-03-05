@@ -61,11 +61,12 @@ dev = [
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
   "flit >=3.10.1,<4.0",
-  "isort ==6.0.0",
+  "isort ==6.0.1",
   "mypy >=1.14.1",
   "numpydoc >=1.8.0",
   "pip >=25.0",
   "pooch >=1.8.0",
+  "POT >=0.9.4",
   "pre-commit >=3.5.0",
   "pytest <9.0.0",
   "pytest-cov >=5.0.0",
@@ -73,7 +74,7 @@ dev = [
   "ruff >=0.9.0",
   "tox >=4.24.1",
   "watchdog >=4.0.0",
-  "xclim >= 0.53.2",
+  "xclim >= 0.55.1",
   "xdoctest>=1.1.5"
 ]
 docs = [
@@ -86,7 +87,7 @@ docs = [
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pygments",
-  "sphinx >=7.0.0,<8.2.0", # pinned until nbsphinx supports sphinx 8.2
+  "sphinx >=7.1.0,<8.2.0", # pinned until nbsphinx supports sphinx 8.2
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink >=0.16.2",
@@ -118,7 +119,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.2.1-dev.2"
+current_version = "0.3.1"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -138,23 +139,24 @@ search = """\
 ------------------------------------------------------------
 """
 replace = """\
-`Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
-------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
+    ------------------------------------------------------------
 
-Contributors:
+    Contributors:
 
-Changes
-^^^^^^^
-* No change.
+    Changes
+    ^^^^^^^
+    * No change.
 
-Fixes
-^^^^^
-* No change.
+    Fixes
+    ^^^^^
+    * No change.
 
 .. _changes_{new_version}:
 
-`v{new_version} <https://github.com/Ouranosinc/xsdba/tree/{new_version}>`_
-----------------------------------------------------------
+`v{new_version} <https://github.com/Ouranosinc/xsdba/tree/{new_version}>`_ ({now:%Y-%m-%d})
+-----------------------------------------------------------------------
 """
 
 [[tool.bumpversion.files]]
@@ -183,7 +185,7 @@ values = [
 ]
 
 [tool.codespell]
-ignore-words-list = "astroid,hanel,lond,ot,socio-economic"
+ignore-words-list = "astroid,hanel,indx,lond,ot,socio-economic"
 
 [tool.coverage.paths]
 source = ["src/xsdba/", "*/site-packages/xsdba/"]

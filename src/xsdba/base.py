@@ -145,7 +145,10 @@ class Grouper(Parametrizable):
             dim, prop = group.split(".")
         else:
             dim, prop = group, "group"
-
+        # TODO : Remove this special workaround
+        # This will only work with MBCn
+        if group == "5D":
+            dim = "time"
         if isinstance(add_dims, str):
             add_dims = [add_dims]
 
@@ -323,6 +326,8 @@ class Grouper(Parametrizable):
                 # the first season is shifted by 1 month the but the middle of the season is shifted in the other direction
                 # by half a month so -(1/12-1/24)*4 = -1/6
                 i = ind.dayofyear / length_year * 4 - 1 / 6
+            elif self.prop == "dayofyear":
+                i = ind.dayofyear
             else:
                 raise ValueError(
                     f"Interpolation is not supported for {self.dim}.{self.prop}."
