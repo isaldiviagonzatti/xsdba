@@ -470,7 +470,8 @@ def escore(
         input_core_dims=[[pts_dim, obs_dim], [pts_dim, new_dim]],
         output_dtypes=[sim.dtype],
         dask="parallelized",
-    )
+        vectorize=True,
+    ).mean()
 
     out.name = "escores"
     out = out.assign_attrs(
