@@ -2,8 +2,24 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
-------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
+    ------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.3.2:
+
+`v0.3.2 <https://github.com/Ouranosinc/xsdba/tree/0.3.2>`_ (2025-03-06)
+-----------------------------------------------------------------------
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
