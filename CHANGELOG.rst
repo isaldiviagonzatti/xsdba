@@ -13,7 +13,7 @@ Changes
 
 Fixes
 ^^^^^
-* ``xsdba.processing.escore`` now correctly handles all-nan slices.  (:issue:`1982` the issue is from `xclim`, need to change this)
+* ``xsdba.processing.escore`` now correctly handles all-nan slices.  (:issue:`109`, :pull:`108`).
 
 .. _changes_0.3.1:
 
