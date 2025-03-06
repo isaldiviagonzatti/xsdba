@@ -14,13 +14,8 @@ For `xclim` users, it will still be possible to import `sdba` if `xsdba` is inst
 
     from xclim import sdba
 
-or by a direct import
-
-.. code-block:: python
-
-    import xsdba
-
-which is what `xclim` now does internally (with `xsdba` renamed to `sdba`).
+Internally, `xclim` simply imports `xsdba` as `sdba`, so there is no different between an import within
+`xclim` or a direct import of `xsdba`.
 
 Units handling
 --------------
@@ -76,3 +71,9 @@ and can be activated in two ways, either from `xclim`, or directly from `xsdba`
 
     with xsdba.set_options(extra_output=True):
         adj = xsdba.MBCn.train(...)
+
+    # or, using the legacy way
+    from xclim import sdba
+
+    with sdba.set_options(extra_output=True):
+        adj = sdba.MBCn.train(...)
