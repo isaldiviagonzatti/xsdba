@@ -2,19 +2,20 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
-    ------------------------------------------------------------
+`Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
+------------------------------------------------------------
 
-    Contributors:
+Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
-    Changes
-    ^^^^^^^
-    * No change.
-
-    Fixes
-    ^^^^^
-    * No change.
+Fixes
+^^^^^
+* Packaging and security adjustments. (:pull:`106`):
+    * Added `deptry`, `codespell`, `vulture`, and `yamllint` to the dev dependencies.
+    * Added a few transitive dependencies (`packaging`, `pandas`) to the core dependencies.
+    * Added `fastnanquantile` to the `dev` dependencies (to be placed in an `extras` recipe for `xsdba` v0.4.0+).
+    * Configured `deptry` to handle optional imports.
+    * A new Makefile command `lint/security` has been added (called when running `$ make lint`).
+    * Updated `tox.ini` with new linting dependencies.
 
 .. _changes_0.3.1:
 
