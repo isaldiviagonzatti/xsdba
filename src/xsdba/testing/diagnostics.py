@@ -19,7 +19,7 @@ from xsdba.adjustment import (
     QuantileDeltaMapping,
 )
 from xsdba.processing import adapt_freq
-from xsdba.testing.utils import cannon_2015_rvs, timelonlatseries
+from xsdba.tests.conftest import cannon_2015_rvs, timelonlatseries
 
 try:
     from matplotlib import pyplot as plt
