@@ -471,7 +471,7 @@ def escore(
         output_dtypes=[sim.dtype],
         dask="parallelized",
         vectorize=True,
-    ).mean()
+    )
 
     out.name = "escores"
     out = out.assign_attrs(
