@@ -10,7 +10,7 @@ Contributors: Éric Dupuis (:user:`coxipi`).
 
 Changes
 ^^^^^^^
-* ``xsdba.jitter_over_thresh`` is available directly in training methods by passing `jitter_over_thresh_value` argument.
+* ``xsdba.jitter_over_thresh`` is available directly in training methods by passing `jitter_over_thresh_value` argument. (:pull:`110`).
 
 Fixes
 ^^^^^
