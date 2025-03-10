@@ -2,19 +2,19 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
-    ------------------------------------------------------------
 
-    Contributors:
+`Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
+------------------------------------------------------------
 
-    Changes
-    ^^^^^^^
-    * No change.
+Contributors: Éric Dupuis (:user:`coxipi`).
 
-    Fixes
-    ^^^^^
-    * No change.
+Changes
+^^^^^^^
+* ``xsdba.jitter_over_thresh`` is available directly in training methods by passing `jitter_over_thresh_value` argument.
+
+Fixes
+^^^^^
+* No change.
 
 .. _changes_0.3.2:
 
