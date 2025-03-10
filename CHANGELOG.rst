@@ -15,6 +15,23 @@ Fixes
 ^^^^^
 * ``xsdba.processing.escore`` now correctly handles all-nan slices.  (:issue:`109`, :pull:`108`).
 
+.. _changes_0.3.2:
+
+`v0.3.2 <https://github.com/Ouranosinc/xsdba/tree/0.3.2>`_ (2025-03-06)
+-----------------------------------------------------------------------
+
+Contributors: Trevor James Smith (:user:`Zeitsperre`).
+
+Fixes
+^^^^^
+* Packaging and security adjustments. (:pull:`106`):
+    * Added `deptry`, `codespell`, `vulture`, and `yamllint` to the dev dependencies.
+    * Added a few transitive dependencies (`packaging`, `pandas`) to the core dependencies.
+    * Added `fastnanquantile` to the `dev` dependencies (to be placed in an `extras` recipe for `xsdba` v0.4.0+).
+    * Configured `deptry` to handle optional imports.
+    * A new Makefile command `lint/security` has been added (called when running `$ make lint`).
+    * Updated `tox.ini` with new linting dependencies.
+
 .. _changes_0.3.1:
 
 `v0.3.1 <https://github.com/Ouranosinc/xsdba/tree/0.3.1>`_ (2025-03-04)
