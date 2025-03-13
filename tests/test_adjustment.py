@@ -724,18 +724,17 @@ class TestQM:
             .pr
             for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
         )
-        ref = xclim.core.units.convert_units_to(ref, "mm/d", "hydro")
-        hist = xclim.core.units.convert_units_to(hist, "mm/d", "hydro")
-        np.random.seed(42)
-        af_jit_inside = EmpiricalQuantileMapping.train(
-            ref, hist, jitter_under_thresh_value=thr, group="time"
-        ).ds.af
+        with xclim.core.units.units.context("hydro"):
+            np.random.seed(42)
+            af_jit_inside = EmpiricalQuantileMapping.train(
+                ref, hist, jitter_under_thresh_value=thr, group="time"
+            ).ds.af
 
-        np.random.seed(42)
-        hist_jit = jitter_under_thresh(hist, thr)
-        af_jit_outside = EmpiricalQuantileMapping.train(
-            ref, hist_jit, group="time"
-        ).ds.af
+            np.random.seed(42)
+            hist_jit = jitter_under_thresh(hist, thr)
+            af_jit_outside = EmpiricalQuantileMapping.train(
+                ref, hist_jit, group="time"
+            ).ds.af
         np.testing.assert_array_almost_equal(af_jit_inside, af_jit_outside, 2)
 
     def test_jitter_over_thresh(self, gosset):
