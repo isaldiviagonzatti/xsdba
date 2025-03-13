@@ -497,6 +497,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         adapt_freq_thresh: str | None = None,
         jitter_under_thresh_value: str | None = None,
         jitter_over_thresh_value: str | None = None,
+        jitter_over_thresh_upper_bnd: str | None = None,
     ) -> tuple[xr.Dataset, dict[str, Any]]:
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
@@ -511,6 +512,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
             adapt_freq_thresh=adapt_freq_thresh,
             jitter_under_thresh_value=jitter_under_thresh_value,
             jitter_over_thresh_value=jitter_over_thresh_value,
+            jitter_over_thresh_upper_bnd=jitter_over_thresh_upper_bnd,
         )
 
         ds.af.attrs.update(
@@ -602,6 +604,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         adapt_freq_thresh: str | None = None,
         jitter_under_thresh_value: str | None = None,
         jitter_over_thresh_value: str | None = None,
+        jitter_over_thresh_upper_bnd: str | None = None,
     ):
         if group.prop not in ["group", "dayofyear"]:
             warn(
@@ -621,6 +624,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             adapt_freq_thresh=adapt_freq_thresh,
             jitter_under_thresh_value=jitter_under_thresh_value,
             jitter_over_thresh_value=jitter_over_thresh_value,
+            jitter_over_thresh_upper_bnd=jitter_over_thresh_upper_bnd,
         )
 
         ds.af.attrs.update(

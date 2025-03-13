@@ -54,6 +54,7 @@ def dqm_train(
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
     jitter_over_thresh_value: str | None = None,
+    jitter_over_thresh_upper_bnd: str | None = None,
 ) -> xr.Dataset:
     """
     Train step on one group.
@@ -79,16 +80,34 @@ def dqm_train(
     jitter_over_thresh_value : str, optional
         Threshold above which a uniform random noise is added to values, a quantity with units.
         Default is None, meaning that jitter over thresh is not performed.
+    jitter_over_thresh_upper_bnd : str, optional
+        Maximum possible value for the random noise, a quantity with units.
+        Default is None, meaning that jitter over thresh is not performed.
 
     Returns
     -------
     xr.Dataset
         The dataset containing the adjustment factors, the quantiles over the training data, and the scaling factor.
+
+    Notes
+    -----
+    `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must be both be specified to
+    use `jitter_over_thresh`, or both be None (default) to skip it.
     """
+    if (
+        None in (s := {jitter_over_thresh_value, jitter_over_thresh_upper_bnd})
+        and len(s) > 1
+    ):
+        raise ValueError(
+            "`jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must "
+            "be both specified or both `None` (default)"
+        )
     if jitter_under_thresh_value:
         ds["hist"] = jitter_under_thresh(ds.hist, jitter_under_thresh_value)
     if jitter_over_thresh_value:
-        ds["hist"] = jitter_over_thresh(ds.hist, jitter_over_thresh_value)
+        ds["hist"] = jitter_over_thresh(
+            ds.hist, jitter_over_thresh_value, jitter_over_thresh_upper_bnd
+        )
     if adapt_freq_thresh:
         ds["hist"] = _adapt_freq_hist(ds, adapt_freq_thresh)
 
@@ -119,6 +138,7 @@ def eqm_train(
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
     jitter_over_thresh_value: str | None = None,
+    jitter_over_thresh_upper_bnd: str | None = None,
 ) -> xr.Dataset:
     """
     EQM: Train step on one group.
@@ -141,19 +161,34 @@ def eqm_train(
     jitter_under_thresh_value : str, optional
         Threshold under which a uniform random noise is added to values, a quantity with units.
         Default is None, meaning that jitter under thresh is not performed.
-    jitter_over_thresh_value : str, optional
-        Threshold above which a uniform random noise is added to values, a quantity with units.
+    jitter_over_thresh_upper_bnd : str, optional
+        Maximum possible value for the random noise, a quantity with units.
         Default is None, meaning that jitter over thresh is not performed.
 
     Returns
     -------
     xr.Dataset
         The dataset containing the adjustment factors and the quantiles over the training data.
+
+    Notes
+    -----
+    `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must be both be specified to
+    use `jitter_over_thresh`, or both be None (default) to skip it.
     """
+    if (
+        None in (s := {jitter_over_thresh_value, jitter_over_thresh_upper_bnd})
+        and len(s) > 1
+    ):
+        raise ValueError(
+            "`jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must "
+            "be both specified or both `None` (default)"
+        )
     if jitter_under_thresh_value:
         ds["hist"] = jitter_under_thresh(ds.hist, jitter_under_thresh_value)
     if jitter_over_thresh_value:
-        ds["hist"] = jitter_over_thresh(ds.hist, jitter_over_thresh_value)
+        ds["hist"] = jitter_over_thresh(
+            ds.hist, jitter_over_thresh_value, jitter_over_thresh_upper_bnd
+        )
     if adapt_freq_thresh:
         ds["hist"] = _adapt_freq_hist(ds, adapt_freq_thresh)
 
