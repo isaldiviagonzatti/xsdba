@@ -153,6 +153,8 @@ class BaseAdjustment(ParametrizableWithDataset):
                 }
                 if input_units == _internal_target:
                     return _input_da
+                # standard name is reinjected so that xclim's special unit
+                #  conversion `context="infer` can be used if need be`
                 if "_standard_name" not in _input_da.attrs:
                     _input_da.attrs["_standard_name"] = [None] * len(varss)
                 input_standard_names = {
