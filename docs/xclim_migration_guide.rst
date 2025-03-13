@@ -64,15 +64,12 @@ and can be activated in two ways, either from `xclim`, or directly from `xsdba`
 
 .. code-block:: python
 
-    # old way
-    # with xclim.set_options(sdba_extra_output=True):
-
     import xsdba
 
     with xsdba.set_options(extra_output=True):
         adj = xsdba.MBCn.train(...)
 
-    # or, using the legacy way
+    # or, using the legacy way of importing
     from xclim import sdba
 
     with sdba.set_options(extra_output=True):
