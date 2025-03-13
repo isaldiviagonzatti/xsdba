@@ -154,7 +154,7 @@ class BaseAdjustment(ParametrizableWithDataset):
                 if input_units == _internal_target:
                     return _input_da
                 if "_standard_name" not in _input_da.attrs:
-                    _input_da["_standard_name"] = [None] * len(varss)
+                    _input_da.attrs["_standard_name"] = [None] * len(varss)
                 input_standard_names = {
                     v: _input_da[_internal_dim].attrs["_standard_name"][iv]
                     for iv, v in enumerate(varss)
