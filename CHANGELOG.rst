@@ -11,6 +11,7 @@ Changes
 ^^^^^^^
 * `xsdba` now supports Python3.13. Metadata and CI have been adjusted. (:pull:`105`).
 * Unpinned `numpy` and raised minimum supported versions of a few scientific libraries. (:pull:`105`).
+* More code that needed to be ported from `xclim` has been added. This includes mainly documentation, as well as testing utilities and a benchmark notebook.  (:pull:`107`).
 
 Fixes
 ^^^^^
