@@ -88,7 +88,6 @@ docs = [
   "ipykernel",
   "ipython >=8.5.0",
   "jupyter_client",
-  "matplotlib >=3.6.0",
   "nbsphinx >=0.9.5",
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
