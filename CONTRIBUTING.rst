@@ -233,5 +233,5 @@ General notes for implementing new bias-adjustment methods
 ----------------------------------------------------------
 
 * Method are implemented as classes in ``src/xsdba/adjustment.py``.
-* If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped by :py:func:`~xsdba.map_blocks` or :py:func:`~xsdba.map_groups` in ``src/xsdba/_adjustment.py``.
-* If you are working on numba-accelerated function that uses ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
+* If the algorithm is complex and would generate many `dask` tasks, it should be implemented as functions wrapped by :py:func:`~xsdba.map_blocks` or :py:func:`~xsdba.map_groups` in ``src/xsdba/_adjustment.py``.
+* If you are working on `numba`-accelerated functions that use ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.

@@ -2,8 +2,8 @@
 """
 Diagnostics Testing Module
 
-This module is meant to compare results with those expected from papers, or create figures illustrating the
-behavior of sdba methods and utilities.
+This module is meant to compare results with those expected from academic papers,
+or to aid in creating figures illustrating the behaviour of SDBA methods and utilities.
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ def synth_rainfall(
 
     .. math::
 
-        p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\Gamma(k)},
+        p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\Gamma(k)}
 
     where :math:`k` is the shape and :math:`\theta` the scale, and :math:`\Gamma` is the Gamma function.
     """

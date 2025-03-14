@@ -14,8 +14,12 @@ For `xclim` users, it will still be possible to import `sdba` if `xsdba` is inst
 
     from xclim import sdba
 
-Internally, `xclim` simply imports `xsdba` as `sdba`, so there is no different between an import within
-`xclim` or a direct import of `xsdba`.
+Internally, `xclim` simply imports `xsdba` as `sdba`, so there is no different between an import within `xclim` or a direct import of `xsdba`.
+
+.. note::
+
+    This behaviour in `xclim` may change in the future.
+
 
 Units handling
 --------------
