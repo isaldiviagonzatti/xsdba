@@ -1025,8 +1025,10 @@ class PrincipalComponents(TrainAdjust):
         The data dimension along which the multiple simulation space dimensions are taken.
         For a multivariate adjustment, this usually is "multivar", as returned by `sdba.stack_variables`.
         For a multisite adjustment, this should be the spatial dimension.
-        The training algorithm currently doesn't support any chunking
-        along either `crd_dim`. `group.dim` and `group.add_dims`.
+        The training algorithm currently doesn't fully support chunking.
+        Chunking is maintained along other dimensions than `crd_dim`.
+        `crd_dim` has to be a single chunk and will be converted if necessary.
+        Chunking along `group.dim` and `group.add_dims` is not supported.
 
     Warnings
     --------
