@@ -5,7 +5,8 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Jan Haacker (:user:`j-haacker`), Éric Dupuis (:user:`coxipi`).
+
 
 Changes
 ^^^^^^^
@@ -16,11 +17,13 @@ Changes
 Fixes
 ^^^^^
 * For `fastnanquantile`, `POT`, and `xclim` have been added to a new `extras` install recipe. All dependencies can be installed using the ``$ python -m pip install xsdba[all]`` command. Documentation has been added. (:pull:`105`).
+* Several small `dask`-related issues (chunking behaviour, dimension order when broadcasting variables, lazy array preservation) have been fixed. (:issue:`112`, :issue:`113`, :pull:`114`).
 * ``xsdba.processing.escore`` now correctly handles all-nan slices. (:issue:`109`, :pull:`108`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `tox` has been configured to test Python3.10 builds against `numpy >=1.24.0,<2.0` in the GitHub Workflow pipeline. Passing the `numpy` keyword to `tox` (``$ tox -e py3.10-numpy``) will adjust the build. (:pull:`105`).
+* Authorship and Zenodo metadata have been updated. Order of contributions is now developers followed by contributors in alphabetical order. (:pull:`116`).
 
 .. _changes_0.3.2:
 
