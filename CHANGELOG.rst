@@ -5,20 +5,23 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Trevor James Smith (:user:`Zeitsperre`).
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Jan Haacker (:user:`j-haacker`).
 
 Changes
 ^^^^^^^
 * `xsdba` now supports Python3.13. Metadata and CI have been adjusted. (:pull:`105`).
 * Unpinned `numpy` and raised minimum supported versions of a few scientific libraries. (:pull:`105`).
+* More code that needed to be ported from `xclim` has been added. This includes mainly documentation, as well as testing utilities and a benchmark notebook.  (:pull:`107`).
 
 Fixes
 ^^^^^
 * For `fastnanquantile`, `POT`, and `xclim` have been added to a new `extras` install recipe. All dependencies can be installed using the ``$ python -m pip install xsdba[all]`` command. Documentation has been added. (:pull:`105`).
+* Several small `dask`-related issues (chunking behaviour, dimension order when broadcasting variables, lazy array preservation) have been fixed. (:issue:`112`, :issue:`113`, :pull:`114`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `tox` has been configured to test Python3.10 builds against `numpy >=1.24.0,<2.0` in the GitHub Workflow pipeline. Passing the `numpy` keyword to `tox` (``$ tox -e py3.10-numpy``) will adjust the build. (:pull:`105`).
+* Authorship and Zenodo metadata have been updated. Order of contributions is now developers followed by contributors in alphabetical order. (:pull:`116`).
 
 .. _changes_0.3.2:
 
