@@ -1614,7 +1614,7 @@ def _lambda_to_alpha(
     delta: str | None = None,
 ) -> xr.DataArray | float:
     """
-    Convert lambda (wavelength) to alpha (normalized wavenumber)
+    Convert lam (wavelength) to alpha (normalized wavenumber)
 
     Parameters
     ----------
@@ -1625,6 +1625,7 @@ def _lambda_to_alpha(
     """
     if isinstance(lam, str):
         lam, u = _parse_str(lam)
+        lam = float(lam)
     else:
         u = lam.units
     delta = convert_units_to(delta, u)
@@ -1638,7 +1639,7 @@ def _alpha_to_lambda(
     alpha: xr.DataArray | float, delta: str | None = None, out_units: str | None = None
 ) -> xr.DataArray | str:
     """
-    Convert alpha (normalized wavenumber) to lambda (wavelength)
+    Convert alpha (normalized wavenumber) to lam (wavelength)
 
     Parameters
     ----------
@@ -1661,6 +1662,21 @@ def _alpha_to_lambda(
 
 def _compute_alpha(da, dims):
     r"""
+    Compute normalized wavenumber
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input physical field. The full field is given, but only to give access to the grid which is used.
+    dims: list
+        Dimensions on which to perform the DCT.
+
+    Returns
+    -------
+    xr.DataArray, with dimensions dims
+
+    Notes
+    -----
     If :math:`i,j` are respectively wavenumbers of the discrete cosine transform along longitude and latitude
     respectively, with :math:`N_i,N_j` being the total number of grid points along longitude and latitude, :math:`\alpha`
     is given by
@@ -1668,9 +1684,8 @@ def _compute_alpha(da, dims):
     .. math::
         \alpha = \\sqrt{\\left(\frac{i}{N_i}\right)^2 + \\left(\frac{j}{N_j}\right)^2}
     """
-    da0 = da.copy()
-    extra_dims = list(set(da0.dims) - set(dims))
-    da0 = da0[{d: 0 for d in extra_dims}].drop(extra_dims)
+    extra_dims = list(set(da.dims) - set(dims))
+    da0 = (da[{d: 0 for d in extra_dims}].drop(extra_dims)).copy()
     # Assign integer values for each coordinate point
     # While we are performing this computation without any transformation to momentum space,
     # this is only for convenience. The first lon/lat is not attributed the (0,0) label, this
@@ -1678,7 +1693,15 @@ def _compute_alpha(da, dims):
     da0 = da0.assign_coords({d: np.arange(da0[d].size) for d in da0.dims})
     # Radial distance in Fourier space
     alpha = sum([da0[d] ** 2 / da0[d].size ** 2 for d in da0.dims]) ** 0.5
-    return alpha.assign_coords({d: da[d] for d in dims}).to_dataset(name="alpha").alpha
+    alpha = alpha.assign_coords({d: da[d] for d in dims}).to_dataset(name="alpha").alpha
+    alpha = alpha.assign_attrs(
+        {
+            "units": "",
+            "standard_name": "normalized_wavenumber",
+            "long_name": "Normalized wavenumber",
+        }
+    )
+    return alpha
 
 
 def _dctn(x):
@@ -1690,7 +1713,7 @@ def _idctn(x):
 
 
 def _compute_variance_alpha(da, dims):
-    """Go deeper in the fun"""
+    """Compute spectral variance with a radial normalized wavenumber axis."""
     # compute variance as a function of alpha
     Fmn = xr.apply_ufunc(
         _dctn,
@@ -1700,16 +1723,17 @@ def _compute_variance_alpha(da, dims):
         dask="parallelized",
         dask_gufunc_kwargs={"allow_rechunk": True},
         vectorize=True,  # Errors in values if set to False! investigate?
+        keep_attrs=True,
     )
     sizes = [da[d].size for d in dims]
     # \sigma = \sum_{m,n} F_{m,n} / (M*N)
     sigmn = (1 / np.prod(sizes)) * (Fmn**2)
-    sigmn["alpha"] = _compute_alpha(da.copy(), dims)
+    sigmn["alpha"] = _compute_alpha((da.to_dataset(name="alpha"))[dims])
 
     # eq.13 and 14 of [Côté et al, 2002]
     # alpha should increase in integer steps of 1/min(N_i,N_j)
     sigmn["alpha"] = (sigmn["alpha"] // (1 / min(sizes))) * (1 / min(sizes))
-    return sigmn.groupby("alpha").sum()
+    return sigmn.groupby("alpha").sum(keep_attrs=True)
 
 
 def compute_variance(da, dims, delta=None):
@@ -1729,6 +1753,9 @@ def compute_variance(da, dims, delta=None):
         with :math:`\\lambda = 2\\Delta/\alpha`. `delta` should be the nominal resolution of the grid.
     """
     var = _compute_variance_alpha(da, dims)
+    # The grid is incomplete for alpha>1, so we restrain to alpha<=1
+    # alpha=0 was excluded simply  because it's excluded from
+    # the total variance \sigma = \sum_{m,n \neq (0,0)} \sigma_{m,n}
     var = var.where((var.alpha > 0) & (var.alpha <= 1), drop=True)
     if delta is not None:
         var = var.assign_coords(alpha=_alpha_to_lambda(var.alpha, delta=delta)).rename(
@@ -1768,29 +1795,76 @@ def _make_filter(template_filter, cond_vals):
     return filter
 
 
-def _cos2_filter_f(da, al1, al2):
+def cos2_filter_f(da, alpha_low, alpha_high):
+    """
+    Apply a cosine squared filter to Fourier coefficient between given thresholds
+
+    Parameters
+    ----------
+    da : np.ndarray
+        Fourier coefficients.
+    alpha_low : float
+        Low frequency threshold (Long wavelength).
+    alpha_high : float
+        High frequency threshold (Short wavelength).
+
+    Returns
+    -------
+    np.ndarray
+        Filter based on the condition values.
+    """
     cond_vals = [
-        (da < al1, 1),
-        (da > al2, 0),
+        (da < alpha_low, 1),
+        (da > alpha_high, 0),
         (
-            (da >= al1) & (da <= al2),
-            np.cos(((da - al1) / (al2 - al1)) * (np.pi / 2)) ** 2,
+            (da >= alpha_low) & (da <= alpha_high),
+            np.cos(((da - alpha_low) / (alpha_high - alpha_low)) * (np.pi / 2)) ** 2,
         ),
     ]
     return _make_filter(da, cond_vals)
 
 
 def _dctn_filter(arr, filter):
+    """Multiply the DCT coefficients by a filter which takes values between 0 and 1."""
     coeffs = _dctn(arr)
     return _idctn(coeffs * filter)
 
 
-def dctn_filter(da, filter_func, lam_low, lam_high, dims, delta=None):
-    """Start the fun here."""
+def dctn_filter(
+    da,
+    lam_long,
+    lam_short,
+    dims=["lat", "lon"],
+    delta=None,
+    filter_func=cos2_filter_f,
+    alpha_low_high=None,
+):
+    """
+    Filter a Discrete Cosine Fourier transform between given thresholds and invert back to real space.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input physical field.
+    lam_long : str | optional
+        Long wavelength threshold.
+    lam_short : str | optional
+        Short wavelength threshold.
+    dims: list
+        Dimensions on which to perform the DCT.
+    delta: str, Optional
+        Should be a string with units, e.g. `delta=="55.5 km"`. This converts `alpha` to `wavelength`.
+    filter_func: function
+        Function used to create the filter. Default is `cos2_filter_f`, which applies a cosine squared filter
+        to Fourier coefficients in momentum space.
+    alpha_low_high : tuple[float,float] | optional
+        Low and high frequencies threshold (Long and short wavelength) for the
+        radial normalized wavenumber (`alpha`). It should be numbers between 0 and 1.
+    """
     if isinstance(da, xr.Dataset):
         out = da.copy()
         for v in da.data_vars:
-            out[v] = dctn_filter(da[v], lam_low, lam_high, dims, delta=delta)
+            out[v] = dctn_filter(da[v], lam_long, lam_short, dims, delta=delta)
         return out.assign_attrs(da.attrs)
     if delta is None:
         if "rlat" in da.dims:
@@ -1798,11 +1872,18 @@ def dctn_filter(da, filter_func, lam_low, lam_high, dims, delta=None):
         else:
             lat = da.lat
         # crappy or good approx?
-        delta = f"{(lat[1] - lat[0]) * 111} km"
-    al1 = _lambda_to_alpha(lam_low, delta=delta)
-    al2 = _lambda_to_alpha(lam_high, delta=delta)
+        delta = f"{(lat[1] - lat[0]).values.item() * 111} km"
+    if alpha_low_high is None and None in set(lam_long, lam_short):
+        raise ValueError(
+            "`lam_long` or `lam_short` can only be None if `alpha_low_high` is provided."
+        )
+    if alpha_low_high is not None:
+        alpha_low, alpha_high = alpha_low_high
+    else:
+        alpha_low = _lambda_to_alpha(lam_long, delta=delta)
+        alpha_high = _lambda_to_alpha(lam_short, delta=delta)
     alpha = _compute_alpha(da, dims)
-    filter = filter_func(alpha, al1, al2)
+    filter = filter_func(alpha, alpha_low, alpha_high)
     out = xr.apply_ufunc(
         _dctn_filter,
         da,
@@ -1812,16 +1893,12 @@ def dctn_filter(da, filter_func, lam_low, lam_high, dims, delta=None):
         vectorize=True,
         dask="parallelized",
         dask_gufunc_kwargs={"allow_rechunk": True},
-    ).assign_attrs(da.attrs)
+        keep_attrs=True,
+    )
     out = out.assign_attrs(
         {
-            "filter_bounds": (al1, al2),
+            "filter_bounds": (alpha_low, alpha_high),
             "filter_func": filter_func.__name__,
         }
     )
     return out
-
-
-def dctn_cost2_filter(da, lam_low, lam_high, dims, delta=None):
-    """More specific fun."""
-    return dctn_filter(da, _cos2_filter_f, lam_low, lam_high, dims, delta)
