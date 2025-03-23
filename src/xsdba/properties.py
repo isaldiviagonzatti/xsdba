@@ -29,7 +29,6 @@ from xsdba.base import Grouper, map_groups, parse_group, uses_dask
 from xsdba.nbutils import _pairwise_haversine_and_bins
 from xsdba.units import (
     _normalized_wavenumber_to_wavelength,
-    _parse_str,
     _wavelength_to_normalized_wavenumber,
     convert_units_to,
     infer_sampling_units,
@@ -1701,11 +1700,8 @@ def _spectral_variance(da, dims, delta=None, group="time"):
     # the total variance \sigma = \sum_{m,n \neq (0,0)} \sigma_{m,n}
     var = var.where((var.alpha > 0) & (var.alpha <= 1), drop=True)
     if delta is not None:
-        var = var.assign_coords(
-            alpha=_normalized_wavenumber_to_wavelength(var.alpha, delta=delta)
-        ).rename({"alpha": "wavelength"})
-        _, u = _parse_str(delta)
-        var["wavelength"].attrs["units"] = u
+        var["alpha"] = _normalized_wavenumber_to_wavelength(var.alpha, delta=delta)
+        var = var.rename({"alpha": "wavelength"})
     var = var.assign_attrs(da.attrs)
     if "units" in da.attrs:
         var.attrs["units"] = str(str2pint(da.units) ** 2)

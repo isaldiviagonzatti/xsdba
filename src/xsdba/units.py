@@ -467,7 +467,7 @@ def _normalized_wavenumber_to_wavelength(
     alpha: xr.DataArray | float, delta: str | None = None, out_units: str | None = None
 ) -> xr.DataArray | str:
     """
-    Convert a normalized wavenumber `alpha` to lam.
+    Convert a normalized wavenumber `alpha` to a wavelength.
 
     Parameters
     ----------
