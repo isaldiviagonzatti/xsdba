@@ -16,10 +16,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-import scipy as sc
 import xarray as xr
 import xclim.indices.run_length as rl
 from scipy import stats
+from scipy.fft import dctn, idctn
 from statsmodels.tsa import stattools
 from xclim.core.indicator import Indicator, base_registry
 from xclim.indices.generic import compare, select_resample_op
@@ -28,7 +28,9 @@ from xclim.indices.stats import fit, parametric_quantile
 from xsdba.base import Grouper, map_groups, parse_group, uses_dask
 from xsdba.nbutils import _pairwise_haversine_and_bins
 from xsdba.units import (
+    _normalized_wavenumber_to_wavelength,
     _parse_str,
+    _wavelength_to_normalized_wavenumber,
     convert_units_to,
     infer_sampling_units,
     pint2cfattrs,
@@ -1608,61 +1610,9 @@ def first_eof():
     )
 
 
-# Spectral utils
-def _lambda_to_alpha(
-    lam: xr.DataArray | str,
-    delta: str | None = None,
-) -> xr.DataArray | float:
-    """
-    Convert lam (wavelength) to alpha (normalized wavenumber)
-
-    Parameters
-    ----------
-    lam : xr.DataArray | float
-        Wavelength.
-    delta: str, Optional
-        Nominal resolution of the grid.
-    """
-    if isinstance(lam, str):
-        lam, u = _parse_str(lam)
-        lam = float(lam)
-    else:
-        u = lam.units
-    delta = convert_units_to(delta, u)
-    alpha = 2 * delta / lam
-    if isinstance(lam, xr.DataArray):
-        alpha.attrs["units"] = ""
-    return alpha
-
-
-def _alpha_to_lambda(
-    alpha: xr.DataArray | float, delta: str | None = None, out_units: str | None = None
-) -> xr.DataArray | str:
-    """
-    Convert alpha (normalized wavenumber) to lam (wavelength)
-
-    Parameters
-    ----------
-    alpha : xr.DataArray | float
-        Normalized wavelength number.
-    delta: str, Optional
-        Nominal resolution of the grid.
-    """
-    delta, u = (
-        _parse_str(delta) if out_units is None else convert_units_to(delta, out_units)
-    ), out_units
-    delta = np.abs(delta)
-    lam = 2 * delta / alpha
-    if isinstance(alpha, xr.DataArray):
-        lam = lam.assign_attrs({"units": u})
-    else:
-        lam = f"{lam} {u}"
-    return lam
-
-
-def _compute_alpha(da, dims):
+def _normalized_radial_wavenumber(da, dims):
     r"""
-    Compute normalized wavenumber
+    Compute a normalized radial wavenumber.
 
     Parameters
     ----------
@@ -1704,19 +1654,11 @@ def _compute_alpha(da, dims):
     return alpha
 
 
-def _dctn(x):
-    return sc.fft.dctn(x, norm="ortho")
-
-
-def _idctn(x):
-    return sc.fft.idctn(x, norm="ortho")
-
-
-def _compute_variance_alpha(da, dims):
-    """Compute spectral variance with a radial normalized wavenumber axis."""
+def _spectral_variance_alpha(da, dims):
+    """Compute spectral variance with a radial normalized wavenumber."""
     # compute variance as a function of alpha
     Fmn = xr.apply_ufunc(
-        _dctn,
+        lambda x: dctn(x, norm="ortho"),
         da,
         input_core_dims=[dims],
         output_core_dims=[dims],
@@ -1728,7 +1670,7 @@ def _compute_variance_alpha(da, dims):
     sizes = [da[d].size for d in dims]
     # \sigma = \sum_{m,n} F_{m,n} / (M*N)
     sigmn = (1 / np.prod(sizes)) * (Fmn**2)
-    sigmn["alpha"] = _compute_alpha((da.to_dataset(name="alpha"))[dims])
+    sigmn["alpha"] = _normalized_radial_wavenumber((da.to_dataset(name="alpha"))[dims])
 
     # eq.13 and 14 of [Côté et al, 2002]
     # alpha should increase in integer steps of 1/min(N_i,N_j)
@@ -1736,7 +1678,7 @@ def _compute_variance_alpha(da, dims):
     return sigmn.groupby("alpha").sum(keep_attrs=True)
 
 
-def compute_variance(da, dims, delta=None):
+def _spectral_variance(da, dims, delta=None, group="time"):
     r"""
     Compute spectral variance
 
@@ -1749,18 +1691,19 @@ def compute_variance(da, dims, delta=None):
     dims: list
         Dimensions on which to perform the DCT.
     delta: str, Optional
-        Should be a string with units, e.g. `delta=="55.5 km"`. This converts `alpha` to `wavelength`,
-        with :math:`\\lambda = 2\\Delta/\alpha`. `delta` should be the nominal resolution of the grid.
+        Nominal resolution of the grid. It should be a string with units.
+    group: xr.Coordinate | str | None = "time"
+        Useless for now # FIXME: this needs to be clarified.
     """
-    var = _compute_variance_alpha(da, dims)
+    var = _spectral_variance_alpha(da, dims)
     # The grid is incomplete for alpha>1, so we restrain to alpha<=1
     # alpha=0 was excluded simply  because it's excluded from
     # the total variance \sigma = \sum_{m,n \neq (0,0)} \sigma_{m,n}
     var = var.where((var.alpha > 0) & (var.alpha <= 1), drop=True)
     if delta is not None:
-        var = var.assign_coords(alpha=_alpha_to_lambda(var.alpha, delta=delta)).rename(
-            {"alpha": "wavelength"}
-        )
+        var = var.assign_coords(
+            alpha=_normalized_wavenumber_to_wavelength(var.alpha, delta=delta)
+        ).rename({"alpha": "wavelength"})
         _, u = _parse_str(delta)
         var["wavelength"].attrs["units"] = u
     var = var.assign_attrs(da.attrs)
@@ -1771,6 +1714,14 @@ def compute_variance(da, dims, delta=None):
         name = name + f" ({var.name})"
     var = var.to_dataset(name=name)[name]
     return var
+
+
+spectral_variance = StatisticalProperty(
+    identifier="spectral_variance",
+    aspect="spatial",
+    compute=_spectral_variance,
+    allowed_groups=["group"],  # FIXME: this needs to be clarified
+)
 
 
 def _make_filter(template_filter, cond_vals):
@@ -1825,9 +1776,9 @@ def cos2_filter_f(da, alpha_low, alpha_high):
 
 
 def _dctn_filter(arr, filter):
-    """Multiply the DCT coefficients by a filter which takes values between 0 and 1."""
-    coeffs = _dctn(arr)
-    return _idctn(coeffs * filter)
+    """Multiply the Fourier (Discrete cosine transform) coefficients by a filter which takes values between 0 and 1."""
+    coeffs = (dctn(arr, norm="ortho"),)
+    return idctn(coeffs * filter)
 
 
 def dctn_filter(
@@ -1880,9 +1831,9 @@ def dctn_filter(
     if alpha_low_high is not None:
         alpha_low, alpha_high = alpha_low_high
     else:
-        alpha_low = _lambda_to_alpha(lam_long, delta=delta)
-        alpha_high = _lambda_to_alpha(lam_short, delta=delta)
-    alpha = _compute_alpha(da, dims)
+        alpha_low = _wavelength_to_normalized_wavenumber(lam_long, delta=delta)
+        alpha_high = _wavelength_to_normalized_wavenumber(lam_short, delta=delta)
+    alpha = _normalized_radial_wavenumber(da, dims)
     filter = filter_func(alpha, alpha_low, alpha_high)
     out = xr.apply_ufunc(
         _dctn_filter,
@@ -1900,5 +1851,7 @@ def dctn_filter(
             "filter_bounds": (alpha_low, alpha_high),
             "filter_func": filter_func.__name__,
         }
-    )
+    ).transpose(
+        *da.dims
+    )  # reimplement original order
     return out

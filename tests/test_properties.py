@@ -611,3 +611,35 @@ class TestProperties:
 
         meas = properties.var.get_measure()(sim_var, ref_var)
         np.testing.assert_allclose(meas, [0.408327], rtol=1e-3)
+
+
+class TestSpectralUtils:
+    def dct_witout_filter(self, open_dataset, gosset):
+        tx = xr.open_dataset(
+            gosset.fetch("CRCM5/tasmax_bby_198406_se.nc"), engine="h5netcdf"
+        )
+        tx = tx.tasmax.isel(time=0)
+        tx_filt = properties.dctn_filter(
+            tx,
+            None,
+            None,
+            dims=["rlon", "rlat"],
+            alpha_low_high=[0.9, 0.99],  # dummy value
+            filter_func=lambda da, _1, _2: 0 * da + 1,  # identity function, mask =1
+        )
+        np.testing.assert_allclose(tx.values, tx_filt.values)
+
+    def dct_filter_everthing(self, open_dataset, gosset):
+        tx = xr.open_dataset(
+            gosset.fetch("CRCM5/tasmax_bby_198406_se.nc"), engine="h5netcdf"
+        )
+        tx = tx.tasmax.isel(time=0)
+        tx_filt = properties.dctn_filter(
+            tx,
+            None,
+            None,
+            dims=["rlon", "rlat"],
+            alpha_low_high=[0.9, 0.99],  # dummy value
+            filter_func=lambda da, _1, _2: 0 * da,  # mask =0
+        )
+        np.testing.assert_allclose((0 * tx).values, tx_filt.values)
