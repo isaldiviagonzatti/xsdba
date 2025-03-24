@@ -938,7 +938,7 @@ def _make_filter(template_filter, cond_vals):
     return filter
 
 
-def cos2_filter_f(da, alpha_low, alpha_high):
+def cos2_filter_func(da, alpha_low, alpha_high):
     """
     Apply a cosine squared filter to Fourier coefficient between given thresholds
 
@@ -1026,7 +1026,7 @@ def spectral_filter(
     lam_short,
     dims=["lat", "lon"],
     delta=None,
-    filter_func=cos2_filter_f,
+    filter_func=cos2_filter_func,
     alpha_low_high=None,
 ):
     """

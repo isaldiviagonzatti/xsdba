@@ -1611,7 +1611,13 @@ def first_eof():
 
 # TODO: add the reference
 def _spectral_variance_alpha(da, dims):
-    """Compute spectral variance with a radial normalized wavenumber."""
+    """
+    Compute spectral variance with a radial normalized wavenumber.
+
+    References
+    ----------
+    :cite:cts:`denis_spectral_2002`
+    """
     # compute variance as a function of alpha
     Fmn = xr.apply_ufunc(
         lambda x: dctn(x, norm="ortho"),
@@ -1628,7 +1634,7 @@ def _spectral_variance_alpha(da, dims):
     sigmn = (1 / np.prod(sizes)) * (Fmn**2)
     sigmn["alpha"] = _normalized_radial_wavenumber(da, dims=dims)
 
-    # eq.13 and 14 of [Côté et al, 2002]
+    # eq.13 and 14 of the reference
     # alpha should increase in integer steps of 1/min(N_i,N_j)
     sigmn["alpha"] = (sigmn["alpha"] // (1 / min(sizes))) * (1 / min(sizes))
     return sigmn.groupby("alpha").sum(keep_attrs=True)
@@ -1658,6 +1664,10 @@ def _spectral_variance(
         Nominal resolution of the grid. It should be a string with units.
     group: xr.Coordinate | str | None = "time"
         Useless for now # FIXME: this needs to be clarified.
+
+    References
+    ----------
+    :cite:cts:`denis_spectral_2002`
     """
     var = _spectral_variance_alpha(da, dims)
     # The grid is incomplete for alpha>1, so we restrain to alpha<=1
