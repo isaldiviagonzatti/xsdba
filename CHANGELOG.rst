@@ -17,6 +17,7 @@ Fixes
 ^^^^^
 * For `fastnanquantile`, `POT`, and `xclim` have been added to a new `extras` install recipe. All dependencies can be installed using the ``$ python -m pip install xsdba[all]`` command. Documentation has been added. (:pull:`105`).
 * Several small `dask`-related issues (chunking behaviour, dimension order when broadcasting variables, lazy array preservation) have been fixed. (:issue:`112`, :issue:`113`, :pull:`114`).
+* `Grouper` now throws an error if `group='time'` is used  with `window>1`.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
