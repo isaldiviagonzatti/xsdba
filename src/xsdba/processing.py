@@ -23,9 +23,9 @@ from xsdba.base import Grouper, uses_dask
 from xsdba.formatting import update_xsdba_history
 from xsdba.nbutils import _escore
 from xsdba.units import (
-    _normalized_wavenumber_to_wavelength,
-    _wavelength_to_normalized_wavenumber,
     harmonize_units,
+    normalized_wavenumber_to_wavelength,
+    wavelength_to_normalized_wavenumber,
 )
 from xsdba.utils import ADDITIVE, copy_all_attrs
 
@@ -996,6 +996,10 @@ def _normalized_radial_wavenumber(da, dims):
     without transforming to momentum space, this is done for convenience. The first longitude/latitude
     point is not assigned the (0,0) label; instead, the center of the lattice in Fourier space corresponds
     to this point.
+
+    References
+    ----------
+    :cite:cts:`denis_spectral_2002`
     """
     extra_dims = list(set(da.dims) - set(dims))
     da0 = (da[{d: 0 for d in extra_dims}].drop(extra_dims)).copy()
@@ -1062,6 +1066,10 @@ def spectral_filter(
     -----
     * If `delta` is specified, the normalized wavenumber `alpha` will be converted to a `wavelength`.
     * The spectral filter requires a field without nan values.
+
+    References
+    ----------
+    :cite:cts:`denis_spectral_2002`
     """
     if isinstance(da, xr.Dataset):
         out = da.copy()
@@ -1082,10 +1090,10 @@ def spectral_filter(
     if alpha_low_high is not None:
         alpha_low, alpha_high = alpha_low_high
     else:
-        alpha_low = _wavelength_to_normalized_wavenumber(lam_long, delta=delta)
-        alpha_high = _wavelength_to_normalized_wavenumber(lam_short, delta=delta)
+        alpha_low = wavelength_to_normalized_wavenumber(lam_long, delta=delta)
+        alpha_high = wavelength_to_normalized_wavenumber(lam_short, delta=delta)
     alpha = _normalized_radial_wavenumber(da, dims)
-    _normalized_wavenumber_to_wavelength
+    normalized_wavenumber_to_wavelength
     filter = filter_func(alpha, alpha_low, alpha_high)
     out = xr.apply_ufunc(
         _dctn_filter,
