@@ -589,6 +589,41 @@ class TestProperties:
             [4.5, 4.5, 4.5, 4.5, 10.5],
         )
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "expected",
+        [
+            (
+                [
+                    1.8995318e-01,
+                    4.0301139e-04,
+                    3.3099027e-03,
+                    4.4388446e-05,
+                    4.2605261e-05,
+                    3.4684131e-06,
+                ]
+            ),
+        ],
+    )
+    def test_spectral_variance(self, gosset, expected):
+        # Some
+        sim = (
+            xr.open_dataset(
+                gosset.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"),
+                engine="h5netcdf",
+            )
+            .tasmax.isel(time=0)
+            .sel(lat=slice(50, 49.5), lon=slice(-80, -79.5))
+            .load()
+        )
+
+        var = properties.spectral_variance(
+            sim,
+            dims=["lat", "lon"],
+            delta=None,
+        )
+        np.testing.assert_allclose(var, expected, rtol=1e-7)
+
     # ADAPT? The plan was not to allow mm/d -> kg m-2 s-1 in xsdba
     def test_get_measure(self, gosset):
         sim = (
@@ -611,35 +646,3 @@ class TestProperties:
 
         meas = properties.var.get_measure()(sim_var, ref_var)
         np.testing.assert_allclose(meas, [0.408327], rtol=1e-3)
-
-
-class TestSpectralUtils:
-    def dct_witout_filter(self, open_dataset, gosset):
-        tx = xr.open_dataset(
-            gosset.fetch("CRCM5/tasmax_bby_198406_se.nc"), engine="h5netcdf"
-        )
-        tx = tx.tasmax.isel(time=0)
-        tx_filt = properties.dctn_filter(
-            tx,
-            None,
-            None,
-            dims=["rlon", "rlat"],
-            alpha_low_high=[0.9, 0.99],  # dummy value
-            filter_func=lambda da, _1, _2: 0 * da + 1,  # identity function, mask =1
-        )
-        np.testing.assert_allclose(tx.values, tx_filt.values)
-
-    def dct_filter_everthing(self, open_dataset, gosset):
-        tx = xr.open_dataset(
-            gosset.fetch("CRCM5/tasmax_bby_198406_se.nc"), engine="h5netcdf"
-        )
-        tx = tx.tasmax.isel(time=0)
-        tx_filt = properties.dctn_filter(
-            tx,
-            None,
-            None,
-            dims=["rlon", "rlat"],
-            alpha_low_high=[0.9, 0.99],  # dummy value
-            filter_func=lambda da, _1, _2: 0 * da,  # mask =0
-        )
-        np.testing.assert_allclose((0 * tx).values, tx_filt.values)

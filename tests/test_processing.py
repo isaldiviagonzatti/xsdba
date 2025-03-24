@@ -16,6 +16,7 @@ from xsdba.processing import (
     jitter_under_thresh,
     normalize,
     reordering,
+    spectral_filter,
     stack_variables,
     standardize,
     to_additive_space,
@@ -303,3 +304,40 @@ def test_stack_variables(gosset):
     ds1p = unstack_variables(da1)
 
     xr.testing.assert_equal(ds1, ds1p)
+
+
+class TestSpectralUtils:
+    def test_spectral_filter_identity(self, gosset):
+        tx = xr.open_dataset(
+            gosset.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"),
+            engine="h5netcdf",
+        )
+        # select lat/lon without nan values
+        # spectral_filter not working in this case, for now
+        tx = tx.tasmax.isel(time=0).sel(lat=slice(50, 47), lon=slice(-80, -74))
+        tx_filt = spectral_filter(
+            tx,
+            None,
+            None,
+            dims=["lon", "lat"],
+            alpha_low_high=[0.9, 0.99],  # dummy value
+            filter_func=lambda da, _1, _2: 0 * da + 1,  # identity function, mask =1
+        )
+        # performing dctn & idctn has a small inherent imprecision
+        np.testing.assert_allclose(tx.values, tx_filt.values, rtol=1e-5)
+
+    def test_spectral_filter_everthing(self, gosset):
+        tx = xr.open_dataset(
+            gosset.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"),
+            engine="h5netcdf",
+        )
+        tx = tx.tasmax.isel(time=0).sel(lat=slice(50, 47), lon=slice(-80, -74))
+        tx_filt = spectral_filter(
+            tx,
+            None,
+            None,
+            dims=["lon", "lat"],
+            alpha_low_high=[0.9, 0.99],  # dummy value
+            filter_func=lambda da, _1, _2: 0 * da,  # mask =0
+        )
+        assert ((0 * tx).values == tx_filt.values).all()
