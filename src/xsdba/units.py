@@ -430,13 +430,6 @@ def harmonize_units(params_to_check):
     return _decorator
 
 
-# spectral utils tools
-# TODO: Is this the right place? In xclim, we have e.g. rate2amount
-# The idea is very similar. Instead of a density, we have length scale delta that
-# guides the conversion
-
-
-# Spectral utils
 def _wavelength_to_normalized_wavenumber(
     lam: xr.DataArray | str,
     delta: str | None = None,

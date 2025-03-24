@@ -1609,6 +1609,7 @@ def first_eof():
     )
 
 
+# TODO: add the reference
 def _spectral_variance_alpha(da, dims):
     """Compute spectral variance with a radial normalized wavenumber."""
     # compute variance as a function of alpha
@@ -1633,6 +1634,7 @@ def _spectral_variance_alpha(da, dims):
     return sigmn.groupby("alpha").sum(keep_attrs=True)
 
 
+# TODO: add the reference
 # TODO: Why can't I make `dims` as positional argument?
 def _spectral_variance(
     da: xr.DataArray,

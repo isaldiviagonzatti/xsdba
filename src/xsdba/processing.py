@@ -976,27 +976,30 @@ def _normalized_radial_wavenumber(da, dims):
     da : xr.DataArray
         Input physical field. The full field is given, but only to give access to the grid which is used.
     dims: list
-        Dimensions on which to perform the DCT.
+        Dimensions on which to perform the Discrete Cosine Transform.
 
     Returns
     -------
-    xr.DataArray, with dimensions dims
+    xr.DataArray
 
     Notes
     -----
-    If :math:`i,j` are respectively wavenumbers of the discrete cosine transform along longitude and latitude
-    respectively, with :math:`N_i,N_j` being the total number of grid points along longitude and latitude, :math:`\alpha`
-    is given by
+    If :math:`i,j` are the wavenumbers of the discrete cosine transform along longitude and latitude,
+    respectively, and :math:`N_i, N_j` are the total number of grid points along longitude and latitude,
+    then :math:`\alpha` is given by:
 
     .. math::
-        \alpha = \\sqrt{\\left(\frac{i}{N_i}\right)^2 + \\left(\frac{j}{N_j}\right)^2}
+
+        \alpha = \sqrt{\left(\frac{i}{N_i}\right)^2 + \left(\frac{j}{N_j}\right)^2}
+
+    Each coordinate point takes integer values. Although we are performing this computation in real space
+    without transforming to momentum space, this is done for convenience. The first longitude/latitude
+    point is not assigned the (0,0) label; instead, the center of the lattice in Fourier space corresponds
+    to this point.
     """
     extra_dims = list(set(da.dims) - set(dims))
     da0 = (da[{d: 0 for d in extra_dims}].drop(extra_dims)).copy()
-    # Assign integer values for each coordinate point
-    # While we are performing this computation without any transformation to momentum space,
-    # this is only for convenience. The first lon/lat is not attributed the (0,0) label, this
-    # will simply correspond to the center of the lattice in Fourier space.
+
     da0 = da0.assign_coords({d: np.arange(da0[d].size) for d in da0.dims})
     # Radial distance in Fourier space
     alpha = sum([da0[d] ** 2 / da0[d].size ** 2 for d in da0.dims]) ** 0.5
