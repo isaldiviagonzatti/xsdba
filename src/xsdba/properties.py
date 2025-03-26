@@ -1609,7 +1609,6 @@ def first_eof():
     )
 
 
-# TODO: add the reference
 def _spectral_variance_alpha(da, dims):
     """
     Compute spectral variance with a radial normalized wavenumber.

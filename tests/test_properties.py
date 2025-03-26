@@ -606,7 +606,6 @@ class TestProperties:
         ],
     )
     def test_spectral_variance(self, gosset, expected):
-        # Some
         sim = (
             xr.open_dataset(
                 gosset.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"),
