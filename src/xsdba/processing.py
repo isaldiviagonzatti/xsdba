@@ -221,8 +221,6 @@ def jitter(
         else:
             _dtype = x.dtype
         epsilon = (np.finfo(_dtype).eps + np.finfo(_dtype).epsneg) / 2
-        if np.abs(val) < 2:
-            return epsilon
         return val * epsilon
 
     out: xr.DataArray = x
