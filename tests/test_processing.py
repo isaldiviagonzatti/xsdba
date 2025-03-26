@@ -63,19 +63,19 @@ def test_jitter_over_thresh():
     assert out.units == "m"
 
 
+@pytest.mark.parametrize("test_val", [1e-6, 1, 100, 1e6])
 @pytest.mark.parametrize(
-    "dtype, delta", [("f8", 1e-6), ("f4", 0.0001), ("f2", 0.5), ("f16", 1e-6)]
+    "dtype, delta", [("f8", 1e-8), ("f4", 1e-6), ("f2", 5e-3), ("f16", 1e-8)]
 )
-def test_jitter_other_dtypes(dtype, delta):
+def test_jitter_other_dtypes(dtype, delta, test_val):
     # below, narrow intervals are meant to increase likely hood of rounding issues
-    test_val = 100
     da = xr.DataArray(test_val + np.zeros(1000, dtype=dtype), attrs={"units": "%"})
     out_high = jitter(
-        da, upper=f"{test_val - delta:.6f} %", maximum=f"{test_val:.6f} %"
+        da, upper=f"{test_val * (1 - delta):.20f} %", maximum=f"{test_val:.20f} %"
     )
-    out_low = jitter(da, lower=f"{test_val + delta:.6f} %", minimum=f"{test_val:.6f} %")
-    np.testing.assert_array_less(out_high, 100)
-    np.testing.assert_array_less(100, out_low)
+    out_low = jitter(da, lower=f"{test_val * (1 + delta):.20f} %", minimum=f"{test_val:.20f} %")
+    np.testing.assert_array_less(out_high, test_val)
+    np.testing.assert_array_less(test_val, out_low)
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
