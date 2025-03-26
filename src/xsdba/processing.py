@@ -237,6 +237,7 @@ def jitter(
             raise ValueError("If 'upper' is given, so must 'maximum'.")
         jitter_upper = np.array(upper).astype(float)
         jitter_max = np.array(maximum).astype(float)
+        jitter_max = jitter_max - np.finfo(x.dtype).eps
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
                 low=jitter_upper, high=jitter_max, size=x.shape, chunks=x.chunks
