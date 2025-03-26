@@ -214,6 +214,7 @@ def jitter(
     --------
     Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
     """
+
     def _eps(val, dtype):
         if dtype.itemsize >= 8:
             dtype = np.float64
@@ -221,6 +222,7 @@ def jitter(
         if np.abs(val) < 2:
             return epsilon
         return val * epsilon
+
     out: xr.DataArray = x
     notnull = x.notnull()
     if lower is not None:
