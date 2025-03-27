@@ -64,9 +64,7 @@ def test_jitter_over_thresh():
 
 
 @pytest.mark.parametrize("test_val", [1e-6, 1, 100, 1e6])
-@pytest.mark.parametrize(
-    "dtype, delta", [("f8", 1e-8), ("f4", 1e-6), ("f16", 1e-8)]
-)
+@pytest.mark.parametrize("dtype, delta", [("f8", 1e-8), ("f4", 1e-6), ("f16", 1e-8)])
 def test_jitter_other_dtypes(dtype, delta, test_val):
     # below, narrow intervals are meant to increase likely hood of rounding issues
     da = xr.DataArray(test_val + np.zeros(1000, dtype=dtype), attrs={"units": "%"})
