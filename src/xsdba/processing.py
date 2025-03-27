@@ -214,21 +214,12 @@ def jitter(
     --------
     Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
     """
-
-    def _eps(val):
-        if x.dtype.itemsize >= 8:
-            _dtype = np.float64
-        else:
-            _dtype = x.dtype
-        epsilon = (np.finfo(_dtype).eps + np.finfo(_dtype).epsneg) / 2
-        return val * epsilon
-
     out: xr.DataArray = x
     notnull = x.notnull()
     if lower is not None:
         jitter_lower = np.array(lower).astype(float)
         jitter_min = np.array(minimum if minimum is not None else 0).astype(float)
-        jitter_min = jitter_min + _eps(jitter_min)
+        jitter_min = np.nextafter(jitter_min.astype(x.dtype), np.inf)
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
                 low=dsk.from_array(jitter_min),
@@ -247,7 +238,7 @@ def jitter(
         jitter_upper = np.array(upper).astype(float)
         jitter_max = np.array(maximum).astype(float)
         if x.dtype.itemsize < 8:
-            jitter_max = jitter_max - _eps(jitter_max)
+            jitter_max = np.nextafter(jitter_max.astype(x.dtype), -np.inf)
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
                 low=jitter_upper, high=jitter_max, size=x.shape, chunks=x.chunks
