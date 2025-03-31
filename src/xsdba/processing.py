@@ -244,7 +244,7 @@ def jitter(
                 low=dsk.from_array(jitter_upper),
                 high=dsk.from_array(jitter_max),
                 size=x.shape,
-                chunks=x.chunks
+                chunks=x.chunks,
             )
         else:
             jitter_dist = np.random.uniform(
