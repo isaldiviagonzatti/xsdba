@@ -237,6 +237,8 @@ def jitter(
             raise ValueError("If 'upper' is given, so must 'maximum'.")
         jitter_upper = np.array(upper).astype(float)
         jitter_max = np.array(maximum).astype(float)
+        # for float64 (dtype.itemsize==8), `np.random.uniform`
+        # already excludes the upper limit
         if x.dtype.itemsize < 8:
             jitter_max = np.nextafter(jitter_max.astype(x.dtype), -np.inf)
         if uses_dask(x):
