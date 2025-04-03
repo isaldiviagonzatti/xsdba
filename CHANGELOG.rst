@@ -2,8 +2,24 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
-------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
+    ------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.4.0:
+
+`v0.4.0 <https://github.com/Ouranosinc/xsdba/tree/0.4.0>`_ (2025-04-03)
+-----------------------------------------------------------------------
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`), Jan Haacker (:user:`j-haacker`), Éric Dupuis (:user:`coxipi`).
 
