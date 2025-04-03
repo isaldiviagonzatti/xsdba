@@ -19,12 +19,15 @@ Fixes
 * Several small `dask`-related issues (chunking behaviour, dimension order when broadcasting variables, lazy array preservation) have been fixed. (:issue:`112`, :issue:`113`, :pull:`114`).
 * ``xsdba.processing.escore`` now correctly handles all-nan slices. (:issue:`109`, :pull:`108`).
 * `xsdba` now uses directly `operator` instead of using `xarray`'s derived `get_op` function. A refactoring in `xarray` had changed the position of `get_op` which caused a bug. (:pull:`120`).
+* For more than 1000 quantiles, `fastnanquantile` is not used anymore, as it would throw an error. (:issue:`119`, :pull:`123`).
+* `Grouper` now throws an error if `group='time'` is used  with `window>1`. (:issue:`104`, :pull:`122`).
 * Slightly reduce "maximum" in `jitter` to fix dtype conversion issue. (:issue:`124`, :pull:`125`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `tox` has been configured to test Python3.10 builds against `numpy >=1.24.0,<2.0` in the GitHub Workflow pipeline. Passing the `numpy` keyword to `tox` (``$ tox -e py3.10-numpy``) will adjust the build. (:pull:`105`).
 * Authorship and Zenodo metadata have been updated. Order of contributions is now developers followed by contributors in alphabetical order. (:pull:`116`).
+* `MBCn.adjust` now re-performs the check on `ref` and `hist` to ensure they have compatible time arrays (the check is done a second time in `adjust` since `ref` and `hist` are given again). (:pull:`118`).
 
 .. _changes_0.3.2:
 
