@@ -78,6 +78,15 @@ def test_jitter_other_dtypes(dtype, delta, test_val):
     assert (out_low >= test_val).all()
 
 
+@pytest.mark.parametrize("test_val", [0])
+@pytest.mark.parametrize("dtype, delta", [("f8", 1e-8), ("f4", 1e-6), ("f16", 1e-8)])
+def test_jitter_near_zero_and_log(dtype, delta, test_val):
+    # below, narrow intervals are meant to increase likely hood of rounding issues
+    da = xr.DataArray(delta / 2 + np.zeros(1000, dtype=dtype), attrs={"units": "%"})
+    out_low = jitter(da, lower=f"{delta:.20f} %", minimum=f"{test_val:.20f} %")
+    assert (np.log(out_low).notnull()).all()
+
+
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_adapt_freq(use_dask, random):
     time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
