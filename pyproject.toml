@@ -89,14 +89,14 @@ docs = [
   "ipython >=8.5.0",
   "jupyter_client",
   "matplotlib >=3.6.0",
-  "nbsphinx >=0.9.5",
+  "nbsphinx >=0.9.7",
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pygments",
-  "sphinx >=7.1.0,<8.2.0", # pinned until nbsphinx supports sphinx 8.2
+  "sphinx >=8.2.2",
   "sphinx-autobuild >=2024.4.16",
-  "sphinx-autodoc-typehints",
-  "sphinx-codeautolink",
+  "sphinx-autodoc-typehints >=3.1.0",
+  "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-intl",
   "sphinx-mdinclude",
@@ -105,7 +105,7 @@ docs = [
 extras = [
   "fastnanquantile >=0.0.2",
   "POT >=0.9.4",
-  "xclim >= 0.55.1"
+  "xclim >=0.56.0"
 ]
 all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]"]
 
@@ -130,7 +130,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.3.3-dev.2"
+current_version = "0.4.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
