@@ -158,7 +158,7 @@ def _nan_quantile_1d(
 
 
 @guvectorize(
-    [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
+    # [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
     cache=False,
@@ -275,10 +275,10 @@ def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> Dat
 
 
 @njit(
-    [
-        float32[:, :](float32[:, :]),
-        float64[:, :](float64[:, :]),
-    ],
+    # [
+    #     float32[:, :](float32[:, :]),
+    #     float64[:, :](float64[:, :]),
+    # ],
     fastmath=False,
     nogil=True,
     cache=False,
@@ -292,10 +292,10 @@ def remove_NaNs(x):  # noqa: N802
 
 
 @njit(
-    [
-        float32(float32[:, :], float32[:, :]),
-        float64(float64[:, :], float64[:, :]),
-    ],
+    # [
+    #     float32(float32[:, :], float32[:, :]),
+    #     float64(float64[:, :], float64[:, :]),
+    # ],
     fastmath=True,
     nogil=True,
     cache=False,
@@ -318,10 +318,10 @@ def _correlation(X, Y):
 
 
 @njit(
-    [
-        float32(float32[:, :]),
-        float64(float64[:, :]),
-    ],
+    # [
+    #     float32(float32[:, :]),
+    #     float64(float64[:, :]),
+    # ],
     fastmath=True,
     nogil=True,
     cache=False,
@@ -343,10 +343,10 @@ def _autocorrelation(X):
 
 
 @guvectorize(
-    [
-        (float32[:, :], float32[:, :], float32[:]),
-        (float64[:, :], float64[:, :], float64[:]),
-    ],
+    # [
+    #     (float32[:, :], float32[:, :], float32[:]),
+    #     (float64[:, :], float64[:, :], float64[:]),
+    # ],
     "(k, n),(k, m)->()",
     nopython=True,
     cache=False,
