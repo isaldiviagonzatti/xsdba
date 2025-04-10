@@ -918,7 +918,7 @@ def grouped_time_indexes(times, group):
 # spectral utils
 def _make_mask(template, cond_vals):
     """
-    Create a filter used to mask Fourier coefficients
+    Create a mask from a series of conditions.
 
     Parameters
     ----------
@@ -931,6 +931,12 @@ def _make_mask(template, cond_vals):
     -------
     xarray.DataArray, [unitless]
         Mask based on the condition values.
+
+    Notes
+    -----
+    Conditions are allowed to have any values. The idea is to create a
+    soft mask with values between 0 and 1, which allows to implement smooth
+    filters.
     """
     mask = xr.full_like(template, 1)
     for cond, val in cond_vals:
@@ -938,9 +944,10 @@ def _make_mask(template, cond_vals):
     return mask
 
 
-def cos2_filter_func(da, low, high):
+def cos2_mask_func(da, low, high):
     """
-    Apply a cosine squared filter to Fourier coefficient between given thresholds.
+    Create a mask applied Fourier coefficient with a cosine squared filter
+    between given thresholds .
 
     Parameters
     ----------
@@ -980,28 +987,28 @@ def _normalized_radial_wavenumber(da, dims):
     Parameters
     ----------
     da : xr.DataArray
-        Input physical field. The full field is given, but only to give access to the grid which is used.
+        Input field.
     dims: list
         Dimensions on which to perform the Discrete Cosine Transform.
 
     Returns
     -------
     xr.DataArray
+        Normalized radial wavenumber.
 
     Notes
     -----
-    If :math:`i,j` are the wavenumbers of the discrete cosine transform along longitude and latitude,
-    respectively, and :math:`N_i, N_j` are the total number of grid points along longitude and latitude,
-    then :math:`\alpha` is given by:
+    The normalized radial wavenumber is obtained at each point of the lattice in reciprocal space following
+    the Fourier transformation along dimensions `dims`. For example, if :math:`i,j` are the wavenumbers of
+    the discrete cosine transform along longitude and latitude, respectively, and :math:`N_i, N_j` are
+    the total number of grid points along longitude and latitude, then the normalized wavenumber
+    :math:`\alpha` is given by:
 
     .. math::
 
         \alpha = \sqrt{\left(\frac{i}{N_i}\right)^2 + \left(\frac{j}{N_j}\right)^2}
 
-    Each coordinate point takes integer values. Although we are performing this computation in real space
-    without transforming to momentum space, this is done for convenience. The first longitude/latitude
-    point is not assigned the (0,0) label; instead, the center of the lattice in Fourier space corresponds
-    to this point.
+    Each coordinate point takes integer values.
 
     References
     ----------
@@ -1010,6 +1017,8 @@ def _normalized_radial_wavenumber(da, dims):
     extra_dims = list(set(da.dims) - set(dims))
     da0 = (da[{d: 0 for d in extra_dims}].drop(extra_dims)).copy()
 
+    # Replace the lat/lon coordinates with the integer values corresponding
+    # to wavenumbers in reciprocal space
     da0 = da0.assign_coords({d: np.arange(da0[d].size) for d in da0.dims})
     # Radial distance in Fourier space
     alpha = sum([da0[d] ** 2 / da0[d].size ** 2 for d in da0.dims]) ** 0.5
@@ -1024,10 +1033,10 @@ def _normalized_radial_wavenumber(da, dims):
     return alpha
 
 
-def _dctn_filter(arr, filter):
+def _dctn_filter(arr, mask):
     """Multiply the Fourier (Discrete cosine transform) coefficients by a filter which takes values between 0 and 1."""
     coeffs = (dctn(arr, norm="ortho"),)
-    return idctn(coeffs * filter, norm="ortho")
+    return idctn(coeffs * mask, norm="ortho")
 
 
 def spectral_filter(
@@ -1036,7 +1045,7 @@ def spectral_filter(
     lam_short,
     dims=["lat", "lon"],
     delta=None,
-    filter_func=cos2_filter_func,
+    mask_func=cos2_mask_func,
     alpha_low_high=None,
 ):
     """
@@ -1056,8 +1065,8 @@ def spectral_filter(
         Nominal resolution of the grid. A string with units, e.g. `delta=="55.5 km"`. This converts `alpha` to `wavelength`.
         If `delta` is not specified, a dimension named `rlat` or `lat` is expected to be in `da` and will be used to
         deduce an appropriate length scale.
-    filter_func: function
-        Function used to create the filter. Default is `cos2_filter_func`, which applies a cosine squared filter
+    mask_func: function
+        Function used to create the mask. Default is `cos2_mask_func`, which applies a cosine squared filter
         to Fourier coefficients in momentum space.
     alpha_low_high : tuple[float,float] | optional
         Low and high frequencies threshold (Long and short wavelength) for the
@@ -1099,12 +1108,11 @@ def spectral_filter(
         alpha_low = wavelength_to_normalized_wavenumber(lam_long, delta=delta)
         alpha_high = wavelength_to_normalized_wavenumber(lam_short, delta=delta)
     alpha = _normalized_radial_wavenumber(da, dims)
-    normalized_wavenumber_to_wavelength
-    filter = filter_func(alpha, alpha_low, alpha_high)
+    mask = mask_func(alpha, alpha_low, alpha_high)
     out = xr.apply_ufunc(
         _dctn_filter,
         da,
-        filter,
+        mask,
         input_core_dims=[dims, dims],
         output_core_dims=[dims],
         vectorize=True,
@@ -1112,10 +1120,11 @@ def spectral_filter(
         dask_gufunc_kwargs={"allow_rechunk": True},
         keep_attrs=True,
     )
+    filter_bounds = alpha_low_high or (lam_long, lam_short)
     out = out.assign_attrs(
         {
-            "filter_bounds": (alpha_low, alpha_high),
-            "filter_func": filter_func.__name__,
+            "filter_bounds": filter_bounds,
+            "mask_func": mask_func.__name__,
         }
     ).transpose(
         *da.dims
