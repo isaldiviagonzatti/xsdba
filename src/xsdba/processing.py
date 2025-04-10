@@ -1091,6 +1091,7 @@ def spectral_filter(
         for v in da.data_vars:
             out[v] = spectral_filter(da[v], lam_long, lam_short, dims, delta=delta)
         return out.assign_attrs(da.attrs)
+
     if delta is None and alpha_low_high is None:
         if "rlat" in da.dims:
             lat = da.rlat
