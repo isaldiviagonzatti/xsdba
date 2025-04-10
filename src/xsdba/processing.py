@@ -940,7 +940,7 @@ def _make_mask(template, cond_vals):
 
 def cos2_filter_func(da, low, high):
     """
-    Apply a cosine squared filter to Fourier coefficient between given thresholds
+    Apply a cosine squared filter to Fourier coefficient between given thresholds.
 
     Parameters
     ----------
@@ -1057,7 +1057,7 @@ def spectral_filter(
         If `delta` is not specified, a dimension named `rlat` or `lat` is expected to be in `da` and will be used to
         deduce an appropriate length scale.
     filter_func: function
-        Function used to create the filter. Default is `cos2_filter_f`, which applies a cosine squared filter
+        Function used to create the filter. Default is `cos2_filter_func`, which applies a cosine squared filter
         to Fourier coefficients in momentum space.
     alpha_low_high : tuple[float,float] | optional
         Low and high frequencies threshold (Long and short wavelength) for the
