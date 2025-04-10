@@ -940,16 +940,16 @@ def _make_filter(template_filter, cond_vals):
 
 def cos2_filter_func(da, alpha_low, alpha_high):
     """
-    Apply a cosine squared filter to Fourier coefficient between given thresholds
+    Apply a cosine squared filter to Fourier coefficient between given thresholds.
 
     Parameters
     ----------
     da : np.ndarray
         Fourier coefficients.
     alpha_low : float
-        Low frequency threshold (Long wavelength).
+        Low frequency threshold (long wavelength).
     alpha_high : float
-        High frequency threshold (Short wavelength).
+        High frequency threshold (short wavelength).
 
     Returns
     -------
@@ -1051,7 +1051,7 @@ def spectral_filter(
         If `delta` is not specified, a dimension named `rlat` or `lat` is expected to be in `da` and will be used to
         deduce an appropriate length scale.
     filter_func: function
-        Function used to create the filter. Default is `cos2_filter_f`, which applies a cosine squared filter
+        Function used to create the filter. Default is `cos2_filter_func`, which applies a cosine squared filter
         to Fourier coefficients in momentum space.
     alpha_low_high : tuple[float,float] | optional
         Low and high frequencies threshold (Long and short wavelength) for the
