@@ -916,29 +916,29 @@ def grouped_time_indexes(times, group):
 
 
 # spectral utils
-def _make_filter(template_filter, cond_vals):
+def _make_mask(template, cond_vals):
     """
     Create a filter used to mask Fourier coefficients
 
     Parameters
     ----------
-    template_filter: xr.DataArray
-        Array with the dimensions we want to filter.
+    template: xr.DataArray
+        Array with the dimensions to be filtered.
     cond_vals: tuple
         The list of (condition, value) pairs applied to create the mask.
 
     Returns
     -------
     xarray.DataArray, [unitless]
-        Filter based on the condition values.
+        Mask based on the condition values.
     """
-    filter = template_filter.copy() * 0 + 1
+    mask = xr.full_like(template, 1)
     for cond, val in cond_vals:
-        filter = filter.where(cond == False, val)
-    return filter
+        mask = mask.where(cond == False, val)
+    return mask
 
 
-def cos2_filter_func(da, alpha_low, alpha_high):
+def cos2_filter_func(da, low, high):
     """
     Apply a cosine squared filter to Fourier coefficient between given thresholds
 
@@ -946,25 +946,31 @@ def cos2_filter_func(da, alpha_low, alpha_high):
     ----------
     da : np.ndarray
         Fourier coefficients.
-    alpha_low : float
+    low : float
         Low frequency threshold (Long wavelength).
-    alpha_high : float
+    high : float
         High frequency threshold (Short wavelength).
 
     Returns
     -------
     np.ndarray
-        Filter based on the condition values.
+        A mask used to apply a low-pass filter.
+
+    Notes
+    -----
+    The mask is 1 below `low`, 0 above `high`, and transitions from 1 to 0
+    following a cosine profile between `low` and `high`.
     """
     cond_vals = [
-        (da < alpha_low, 1),
-        (da > alpha_high, 0),
+        # This first condition could be remove, the mask starts as an array of 1's
+        (da < low, 1),
+        (da > high, 0),
         (
-            (da >= alpha_low) & (da <= alpha_high),
-            np.cos(((da - alpha_low) / (alpha_high - alpha_low)) * (np.pi / 2)) ** 2,
+            (da >= low) & (da <= high),
+            np.cos(((da - low) / (high - low)) * (np.pi / 2)) ** 2,
         ),
     ]
-    return _make_filter(da, cond_vals)
+    return _make_mask(da, cond_vals)
 
 
 def _normalized_radial_wavenumber(da, dims):
@@ -1081,7 +1087,7 @@ def spectral_filter(
             lat = da.rlat
         else:
             lat = da.lat
-        # crappy or good approx?
+        # is this a good approximation?
         delta = f"{(lat[1] - lat[0]).values.item() * 111} km"
     if alpha_low_high is None and None in set(lam_long, lam_short):
         raise ValueError(
@@ -1113,5 +1119,5 @@ def spectral_filter(
         }
     ).transpose(
         *da.dims
-    )  # reimplement original order
+    )  # reimplement original order, if needed
     return out
