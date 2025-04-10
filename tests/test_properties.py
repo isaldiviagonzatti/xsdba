@@ -592,6 +592,7 @@ class TestProperties:
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "expected",
+        # values obtained in xsdba v0.5
         [
             (
                 [
