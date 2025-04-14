@@ -195,6 +195,8 @@ Before you submit a pull request, check that it meets these guidelines:
 Tips
 ----
 
+If you are working on numba-accelerated function that uses ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
+
 To run a subset of tests:
 
 .. code-block:: console

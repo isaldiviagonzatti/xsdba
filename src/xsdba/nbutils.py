@@ -159,10 +159,10 @@ def _nan_quantile_1d(
 
 
 @guvectorize(
-    # [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
+    [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    cache=False,
+    cache=True,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -353,13 +353,13 @@ def _autocorrelation(X):
 
 
 @guvectorize(
-    # [
-    #     (float32[:, :], float32[:, :], float32[:]),
-    #     (float64[:, :], float64[:, :], float64[:]),
-    # ],
+    [
+        (float32[:, :], float32[:, :], float32[:]),
+        (float64[:, :], float64[:, :], float64[:]),
+    ],
     "(k, n),(k, m)->()",
     nopython=True,
-    cache=False,
+    cache=True,
 )
 def _escore(tgt, sim, out):
     """
