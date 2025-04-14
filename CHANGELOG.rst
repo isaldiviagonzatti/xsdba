@@ -9,7 +9,7 @@ Contributors: Éric Dupuis (:user:`coxipi`)
 
 Changes
 ^^^^^^^
-* Numba utilities (``xsdba.nbutils``) are now declared without a signature, which means they are not precompiled, which speeds up the general import of `xsdba`. (:pull:`135`).
+* Speed up import by activate `cache=True` for `guvectorize` decorators and remove explicit signature in other numba-accelerated functions from ``xsdba.nbutils``. (:pull:`135`).
 
 Fixes
 ^^^^^
