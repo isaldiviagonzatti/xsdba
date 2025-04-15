@@ -1081,7 +1081,7 @@ def spectral_filter(
     Notes
     -----
     * If `delta` is specified, the normalized wavenumber `alpha` will be converted to a `wavelength`.
-    * The spectral filter requires a field without nan values.
+    * If the input field contains any `nan`, the output will be all `nan` values.
 
     References
     ----------

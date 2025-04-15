@@ -1639,7 +1639,6 @@ def _spectral_variance_alpha(da, dims):
     return sigmn.groupby("alpha").sum(keep_attrs=True)
 
 
-# TODO: add the reference
 # TODO: Why can't I make `dims` as positional argument?
 def _spectral_variance(
     da: xr.DataArray,
@@ -1663,6 +1662,10 @@ def _spectral_variance(
         Nominal resolution of the grid. It should be a string with units.
     group: xr.Coordinate | str | None = "time"
         Useless for now # FIXME: this needs to be clarified.
+
+    Notes
+    -----
+    If the input field contains any `nan`, the output will be all `nan` values.
 
     References
     ----------
