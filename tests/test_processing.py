@@ -361,7 +361,7 @@ class TestSpectralUtils:
             lam_short=None,
             dims=["lon", "lat"],
             alpha_low_high=[0.9, 0.99],  # dummy value
-            filter_func=lambda da, _1, _2: 0 * da + 1,  # identity function, mask =1
+            mask_func=lambda da, _1, _2: 0 * da + 1,  # identity function, mask =1
         )
         # performing dctn & idctn has a small inherent imprecision
         np.testing.assert_allclose(tx.values, tx_filt.values, rtol=1e-5)
@@ -378,7 +378,7 @@ class TestSpectralUtils:
             lam_short=None,
             dims=["lon", "lat"],
             alpha_low_high=[0.9, 0.99],  # dummy value
-            filter_func=lambda da, _1, _2: 0 * da,  # mask =0
+            mask_func=lambda da, _1, _2: 0 * da,  # mask =0
         )
         assert ((0 * tx).values == tx_filt.values).all()
 
