@@ -9,7 +9,7 @@ Contributors: Éric Dupuis (:user:`coxipi`)
 
 Changes
 ^^^^^^^
-* Speed up import by activate `cache=True` for `guvectorize` decorators and remove explicit signature in other numba-accelerated functions from ``xsdba.nbutils``. (:pull:`135`).
+* Speed up import by activating `cache=True` for in numba-accelerated functions from ``xsdba.nbutils``. (:pull:`135`).
 
 Fixes
 ^^^^^
