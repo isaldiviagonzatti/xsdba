@@ -150,6 +150,11 @@ jobs:
           environment-file: environment-dev.yml
           create-args: >-
             python=${{ matrix.python-version }}
+      - name: Install Eigen3 and SBCK
+        if: ${{ matrix.python-version == '3.11' }}
+        run: |
+          mamba install -y -c conda-forge eigen3
+          python -m pip install --require-hashes -r CI/requirements_sbck.txt
       - name: Install xsdba
         run: |
           python -m pip install --no-deps .

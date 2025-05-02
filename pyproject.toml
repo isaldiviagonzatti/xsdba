@@ -107,7 +107,11 @@ extras = [
   "POT >=0.9.4",
   "xclim >=0.56.0"
 ]
-all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]"]
+sbck = [
+  # The sbck dependency requires the "eigen3"/"libeigen3-dev" package to be installed on the system.
+  "sbck >=1.4.0"
+]
+all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]", "xsdba[sbck]"]
 
 [project.scripts]
 xsdba = "xsdba.cli:app"
