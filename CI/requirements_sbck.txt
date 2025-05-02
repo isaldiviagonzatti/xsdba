@@ -429,10 +429,12 @@ pot==0.9.5 \
     --hash=sha256:f0dc608cea1107289a58dec33cddc1b0a3fea77ff36d66e2c8ac7aeea543969a \
     --hash=sha256:f9b775daf69cb4043897050961f9b654c30261543e531d53248a99e5599db0c8
     # via sbck
-pybind11==2.13.6 \
-    --hash=sha256:237c41e29157b962835d356b370ededd57594a26d5894a795960f0047cb5caf5 \
-    --hash=sha256:ba6af10348c12b24e92fa086b39cfba0eff619b61ac77c406167d813b096d39a
-    # via sbck
+pybind11==2.12.0 \
+    --hash=sha256:5e3c557a84b06b969247630407fc4d985bed157b4253b13153b8e8e165e0c3dc \
+    --hash=sha256:df8d60b94f9e714d81013db233393d430ebf9f3551642b82291cf1b14d1afdbd
+    # via
+    #   -r CI/requirements_sbck.in
+    #   sbck
 pyparsing==3.2.3 \
     --hash=sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf \
     --hash=sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be

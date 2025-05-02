@@ -110,6 +110,7 @@ extras = [
 ]
 sbck = [
   # The sbck dependency requires the "eigen3"/"libeigen3-dev" package to be installed on the system.
+  "pybind11 >=2.12.0",
   "sbck >=1.4.0"
 ]
 all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]", "xsdba[sbck]"]
