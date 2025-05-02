@@ -46,6 +46,7 @@ dependencies = [
   "packaging",
   "pandas >=2.2.0",
   "pint>=0.24.4",
+  "rich >=13.7.0",
   "scipy >=1.11.0",
   "statsmodels >=0.14.2",
   "typer >=0.12.3",
@@ -214,16 +215,15 @@ source = ["xsdba"]
 [tool.deptry]
 extend_exclude = ["docs"]
 ignore_notebooks = true
-pep621_dev_dependency_groups = ["all", "dev", "docs"]
+pep621_dev_dependency_groups = ["all", "dev", "docs", "extras", "sbck"]
 
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
 "POT" = "ot"
+"sbck" = "SBCK"
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["SBCK"]
-DEP003 = ["rich"]
-DEP004 = ["fastnanquantile", "ot", "pooch", "xclim"] # remove some of these in xsdba>=0.4.0
+DEP004 = ["fastnanquantile", "ot", "matplotlib", "pooch", "SBCK", "xclim"]
 
 [tool.flit.sdist]
 include = [
