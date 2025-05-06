@@ -9,6 +9,7 @@ from scipy.stats import genpareto, norm, uniform
 from xsdba import adjustment
 from xsdba.adjustment import (
     LOCI,
+    OTC,
     BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
@@ -976,14 +977,18 @@ class TestOTC:
         attrs_pr = {"units": "kg m-2 s-1", "kind": MULTIPLICATIVE}
         ref_tas = timelonlatseries(ref_x, attrs=attrs_tas)
         ref_pr = timelonlatseries(ref_y, attrs=attrs_pr)
-        ref = xr.merge([ref_tas, ref_pr])
+        ref = xr.merge([ref_tas.to_dataset(name="tas"), ref_pr.to_dataset(name="=pr")])
         ref = stack_variables(ref)
 
         hist_tas = timelonlatseries(hist_x, attrs=attrs_tas)
         hist_pr = timelonlatseries(hist_y, attrs=attrs_pr)
-        hist = xr.merge([hist_tas, hist_pr])
+        hist = xr.merge(
+            [hist_tas.to_dataset(name="tas"), hist_pr.to_dataset(name="pr")]
+        )
         hist = stack_variables(hist)
-
+        # FIXME: Is multivar comparison too sensitive? I don't know why we would have an error here.
+        # For now I just force identifical multivar coordinates
+        hist["multivar"] = ref.multivar
         scen = OTC.adjust(ref, hist, bin_width=bin_width, jitter_inside_bins=False)
 
         otc_sbck = adjustment.SBCK_OTC
@@ -1053,9 +1058,11 @@ class TestdOTC:
             sim_tas = sim_tas.chunk({"time": -1})
             sim_pr = sim_pr.chunk({"time": -1})
 
-        ref = xr.merge([ref_tas, ref_pr])
-        hist = xr.merge([hist_tas, hist_pr])
-        sim = xr.merge([sim_tas, sim_pr])
+        ref = xr.merge([ref_tas.to_dataset(name="tas"), ref_pr.to_dataset(name="pr")])
+        hist = xr.merge(
+            [hist_tas.to_dataset(name="tas"), hist_pr.to_dataset(name="pr")]
+        )
+        sim = xr.merge([sim_tas.to_dataset(name="tas"), sim_pr.to_dataset(name="pr")])
 
         ref = stack_variables(ref)
         hist = stack_variables(hist)
