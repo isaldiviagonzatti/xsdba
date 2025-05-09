@@ -5,10 +5,13 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors:  Éric Dupuis (:user:`coxipi`).
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`)
 
 Changes
 ^^^^^^^
+* Speed up import by activating `cache=True` for in numba-accelerated functions from ``xsdba.nbutils``. (:pull:`135`).
+* Added a new installation recipe (``pip install xsdba[sbck]``) for installing the `SBCK` package. (:pull:`139`):
+    * Note that `SBCK` support is experimental and that the `pybind11` library must be installed prior to installing `SBCK`.
 * New functions related to spectral properties in Fourier space:
     * Perform a spectral filter with ``xsdba.processing.spectral_filter`` with a low-pass filter with a cosine-squared profile by default. (:pull:`88`).
     * New spatial diagnostic to compute the spectral variance of a given field ``xsdba.properties.spectral_variance``. (:pull:`88`).
@@ -16,6 +19,11 @@ Changes
 Fixes
 ^^^^^
 * No change.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The `tox` and CI configurations now support the installation of `SBCK` and `Eigen3` for testing purposes. (:pull:`139`).
+* The `coveralls` tox keyword has been renamed to `coverage` to avoid confusion with the `coveralls` service. (:pull:`139`).
 
 .. _changes_0.4.0:
 
