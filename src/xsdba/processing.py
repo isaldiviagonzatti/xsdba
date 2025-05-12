@@ -1014,7 +1014,7 @@ def _normalized_radial_wavenumber(ds_dims):
     :cite:cts:`denis_spectral_2002`
     """
     # Replace lat/lon coordinates with integers (wavenumbers in reciprocal space)
-    da0 = xr.Dataset(coords={d: np.arange(sh) for d, sh in dict(ds_dims.dims).items()})
+    da0 = xr.Dataset(coords={d: np.arange(sh) for d, sh in ds_dims.dims.items()})
     # Radial distance in Fourier space
     alpha = sum([da0[d] ** 2 / da0[d].size ** 2 for d in da0.dims]) ** 0.5
     alpha = (
