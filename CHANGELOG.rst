@@ -10,10 +10,17 @@ Contributors: Éric Dupuis (:user:`coxipi`)
 Changes
 ^^^^^^^
 * Speed up import by activating `cache=True` for in numba-accelerated functions from ``xsdba.nbutils``. (:pull:`135`).
+* Added a new installation recipe (``pip install xsdba[sbck]``) for installing the `SBCK` package. (:pull:`139`):
+    * Note that `SBCK` support is experimental and that the `pybind11` library must be installed prior to installing `SBCK`.
 
 Fixes
 ^^^^^
 * No change.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The `tox` and CI configurations now support the installation of `SBCK` and `Eigen3` for testing purposes. (:pull:`139`).
+* The `coveralls` tox keyword has been renamed to `coverage` to avoid confusion with the `coveralls` service. (:pull:`139`).
 
 .. _changes_0.4.0:
 
