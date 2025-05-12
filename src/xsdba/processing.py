@@ -981,15 +981,13 @@ def cos2_mask_func(da, low, high):
     return _make_mask(da, cond_vals)
 
 
-def _normalized_radial_wavenumber(da, dims):
+def _normalized_radial_wavenumber(ds_dims):
     r"""
     Compute a normalized radial wavenumber.
 
     Parameters
     ----------
-    da : xr.DataArray
-        Input field.
-    dims: list
+    ds_dims: xr.DataArray
         Dimensions on which to perform the Discrete Cosine Transform.
 
     Returns
@@ -1015,15 +1013,17 @@ def _normalized_radial_wavenumber(da, dims):
     ----------
     :cite:cts:`denis_spectral_2002`
     """
-    extra_dims = list(set(da.dims) - set(dims))
-    da0 = (da[{d: 0 for d in extra_dims}].drop(extra_dims)).copy()
-
+    dims_and_shapes = dict(ds_dims.dims)
     # Replace the lat/lon coordinates with the integer values corresponding
     # to wavenumbers in reciprocal space
-    da0 = da0.assign_coords({d: np.arange(da0[d].size) for d in da0.dims})
+    da0 = xr.Dataset(coords={d: np.arange(s) for d, s in dims_and_shapes.items()})
     # Radial distance in Fourier space
     alpha = sum([da0[d] ** 2 / da0[d].size ** 2 for d in da0.dims]) ** 0.5
-    alpha = alpha.assign_coords({d: da[d] for d in dims}).to_dataset(name="alpha").alpha
+    alpha = (
+        alpha.assign_coords({d: ds_dims[d] for d in dims_and_shapes.keys()})
+        .to_dataset(name="alpha")
+        .alpha
+    )
     alpha = alpha.assign_attrs(
         {
             "units": "",
@@ -1087,6 +1087,8 @@ def spectral_filter(
     ----------
     :cite:cts:`denis_spectral_2002`
     """
+    dims = [dims] if isinstance(dims, str) else dims
+
     if isinstance(da, xr.Dataset):
         out = da.copy()
         for v in da.data_vars:
@@ -1109,7 +1111,7 @@ def spectral_filter(
     else:
         alpha_low = wavelength_to_normalized_wavenumber(lam_long, delta=delta)
         alpha_high = wavelength_to_normalized_wavenumber(lam_short, delta=delta)
-    alpha = _normalized_radial_wavenumber(da, dims)
+    alpha = _normalized_radial_wavenumber((da.to_dataset())[dims])
     mask = mask_func(alpha, alpha_low, alpha_high)
     out = xr.apply_ufunc(
         _dctn_filter,

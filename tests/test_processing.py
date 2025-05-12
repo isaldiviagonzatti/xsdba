@@ -388,17 +388,17 @@ class TestSpectralUtils:
             engine="h5netcdf",
         )
 
-        sim = ds.tasmax.isel(time=0).sel(lat=slice(50, 49.5), lon=slice(-80, -79.5))
-        alpha = _normalized_radial_wavenumber(sim, dims=["lon", "lat"])
+        ds_sim = ds.isel(time=0).sel(lat=slice(50, 49.5), lon=slice(-80, -79.5))
+        alpha = _normalized_radial_wavenumber(ds_sim[["lon", "lat"]])
         # it is similar to the function itself, but a bit more human readable with the numpy notation
         # I think it's a good check
         alpha_by_hand = np.array(
             [
                 [
-                    np.sqrt((i / sim.lon.size) ** 2 + (j / sim.lat.size) ** 2)
-                    for i in np.arange(sim.lon.size)
+                    np.sqrt((i / ds_sim.lon.size) ** 2 + (j / ds_sim.lat.size) ** 2)
+                    for i in np.arange(ds_sim.lon.size)
                 ]
-                for j in np.arange(sim.lat.size)
+                for j in np.arange(ds_sim.lat.size)
             ]
         )
         np.testing.assert_allclose(alpha.values, alpha_by_hand)
