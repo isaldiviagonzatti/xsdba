@@ -33,7 +33,9 @@ __all__ = [
 ]
 
 units = pint.get_application_registry()
-
+# CF-xarray forces numpy arrays even for scalar values, not sure why.
+# We don't want that in xsdba, the magnitude of a scalar is a scalar (float).
+units.force_ndarray_like = False
 FREQ_UNITS = {
     "D": "d",
     "W": "week",
@@ -313,7 +315,7 @@ def _convert_units_to(  # noqa: C901
             out = out.assign_attrs(units=target_unit)
         else:  # scalar
             # explicit float cast because cf-xarray registry outputting 0-dim arrays
-            out = float(str2pint(source).to(target_unit).m)
+            out = str2pint(source).to(target_unit).m
         return out
 
 
