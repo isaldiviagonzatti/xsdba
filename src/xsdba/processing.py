@@ -981,13 +981,15 @@ def cos2_mask_func(da, low, high):
     return _make_mask(da, cond_vals)
 
 
-def _normalized_radial_wavenumber(ds_dims):
+def _normalized_radial_wavenumber(da, dims):
     r"""
     Compute a normalized radial wavenumber.
 
     Parameters
     ----------
-    ds_dims: xr.DataArray
+    da: xr.DataArray or xr.Dataset
+        Input field to be transformed in reciprocal space.
+    dims: list[str]
         Dimensions on which to perform the Discrete Cosine Transform.
 
     Returns
@@ -1014,6 +1016,7 @@ def _normalized_radial_wavenumber(ds_dims):
     :cite:cts:`denis_spectral_2002`
     """
     # Replace lat/lon coordinates with integers (wavenumbers in reciprocal space)
+    ds_dims = da[dims] if isinstance(da, xr.Dataset) else (da.to_dataset())[dims]
     da0 = xr.Dataset(coords={d: range(sh) for d, sh in ds_dims.dims.items()})
     # Radial distance in Fourier space
     alpha = sum([da0[d] ** 2 / da0[d].size ** 2 for d in da0.dims]) ** 0.5
@@ -1105,7 +1108,7 @@ def spectral_filter(
     else:
         alpha_low = wavelength_to_normalized_wavenumber(lam_long, delta=delta)
         alpha_high = wavelength_to_normalized_wavenumber(lam_short, delta=delta)
-    alpha = _normalized_radial_wavenumber((da.to_dataset())[dims])
+    alpha = _normalized_radial_wavenumber(da, dims)
     mask = mask_func(alpha, alpha_low, alpha_high)
     out = xr.apply_ufunc(
         _dctn_filter,
