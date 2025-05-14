@@ -6,6 +6,7 @@ Base Classes and Developer Tools
 
 from __future__ import annotations
 
+import operator
 from collections import UserDict
 from collections.abc import Callable, Sequence
 from inspect import _empty, signature
@@ -141,6 +142,12 @@ class Grouper(Parametrizable):
             by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the
             DataArrays, they will be omitted.
         """
+        if group == "time" and window > 1:
+            raise ValueError(
+                "The group given is 'time', but the window given is greater than 1. The `group = 'time'` option "
+                "takes the complete series, thus the concept of window is not applicable in this case. When using `group = 'time'`, "
+                "`window=1` is expected."
+            )
         if "." in group:
             dim, prop = group.split(".")
         else:
@@ -922,7 +929,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         if op not in constraints:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
-    return xr.core.ops.get_op(binary_op)
+    return getattr(operator, f"__{binary_op}__")
 
 
 # XC: calendar
