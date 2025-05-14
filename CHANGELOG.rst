@@ -5,7 +5,7 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Trevor James Smith (:user:`Zeitsperre`), Jan Haacker (:user:`j-haacker`).
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Jan Haacker (:user:`j-haacker`), Éric Dupuis (:user:`coxipi`).
 
 Changes
 ^^^^^^^
@@ -17,6 +17,7 @@ Fixes
 ^^^^^
 * For `fastnanquantile`, `POT`, and `xclim` have been added to a new `extras` install recipe. All dependencies can be installed using the ``$ python -m pip install xsdba[all]`` command. Documentation has been added. (:pull:`105`).
 * Several small `dask`-related issues (chunking behaviour, dimension order when broadcasting variables, lazy array preservation) have been fixed. (:issue:`112`, :issue:`113`, :pull:`114`).
+* ``xsdba.processing.from_additive_space`` now handles units correctly by using `convert_units_to` instead of `harmonize_units`. (:pull:`146`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
