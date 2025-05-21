@@ -381,7 +381,7 @@ class TestDQM:
 
         p2 = dqm2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
-    
+
     def test_360(self, timelonlatseries, random):
         """
         Train on
@@ -402,14 +402,14 @@ class TestDQM:
         y = yd.ppf(u)
 
         # Test train
-        attrs = {"units": 'K', "kind": '+'}
+        attrs = {"units": "K", "kind": "+"}
 
         hist = timelonlatseries(x, attrs=attrs)
         ref = timelonlatseries(y, attrs=attrs)
 
-        ref=ref.convert_calendar("360_day", align_on='year')
-        hist=hist.convert_calendar("360_day", align_on='year')
-        
+        ref = ref.convert_calendar("360_day", align_on="year")
+        hist = hist.convert_calendar("360_day", align_on="year")
+
         group = {"group": "time.dayofyear", "window": 31}
         group = Grouper.from_kwargs(**group)["group"]
         DQM = DetrendedQuantileMapping.train(
@@ -419,7 +419,7 @@ class TestDQM:
             group=group,
             nquantiles=50,
         )
-        assert DQM.ds.sizes == {'dayofyear': 360, 'quantiles': 50}
+        assert DQM.ds.sizes == {"dayofyear": 360, "quantiles": 50}
 
 
 @pytest.mark.slow
