@@ -18,7 +18,7 @@ Changes
 
 Fixes
 ^^^^^
-* Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray fonction.(:pull:`147`, :issue:`148`).
+* Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
