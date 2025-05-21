@@ -388,7 +388,7 @@ class TestDQM:
         hist: U
         ref: Normal
 
-        Predict on hist to get ref
+        Predict on hist to get ref with cal 360 day and doy grouping
         """
         ns = 10000
         u = random.random(ns)

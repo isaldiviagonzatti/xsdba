@@ -216,10 +216,6 @@ class Grouper(Parametrizable):
         if self.prop == "dayofyear":
             if ds is not None:
                 cal = ds.time.dt.calendar
-                # mdoy = max(
-                #     xr.coding.calendar_ops._days_in_year(yr, cal)
-                #     for yr in np.unique(ds[self.dim].dt.year)
-                # )
                 # TODO : Change this to `ds[self.dim].dt.days_in_year.max().item()` when minimum xarray is 2024.09
                 mdoy = max_doy[cal]
             else:
