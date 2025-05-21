@@ -19,7 +19,6 @@ import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 from xarray.core import dtypes
-from xclim.core.calendar import max_doy
 
 from xsdba.options import OPTIONS
 
@@ -929,6 +928,20 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
     return getattr(operator, f"__{binary_op}__")
+
+
+# XC: calendar
+max_doy = {
+    "standard": 366,
+    "gregorian": 366,
+    "proleptic_gregorian": 366,
+    "julian": 366,
+    "noleap": 365,
+    "365_day": 365,
+    "all_leap": 366,
+    "366_day": 366,
+    "360_day": 360,
+}
 
 
 # XC: calendar
