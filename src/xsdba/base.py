@@ -25,6 +25,21 @@ from xsdba.options import OPTIONS
 # TODO : Redistributes some functions in existing/new scripts
 
 
+# XC: calendar
+# TODO: remove this and use `ds[self.dim].dt.days_in_year.max().item()` when minimum xarray is 2024.09
+max_doy = {
+    "standard": 366,
+    "gregorian": 366,
+    "proleptic_gregorian": 366,
+    "julian": 366,
+    "noleap": 365,
+    "365_day": 365,
+    "all_leap": 366,
+    "366_day": 366,
+    "360_day": 360,
+}
+
+
 # ## Base class for the sdba module
 class Parametrizable(UserDict):
     """
@@ -928,20 +943,6 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
     return getattr(operator, f"__{binary_op}__")
-
-
-# XC: calendar
-max_doy = {
-    "standard": 366,
-    "gregorian": 366,
-    "proleptic_gregorian": 366,
-    "julian": 366,
-    "noleap": 365,
-    "365_day": 365,
-    "all_leap": 366,
-    "366_day": 366,
-    "360_day": 360,
-}
 
 
 # XC: calendar
