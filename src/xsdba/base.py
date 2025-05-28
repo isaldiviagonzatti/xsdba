@@ -498,6 +498,18 @@ class Grouper(Parametrizable):
 
         return out
 
+    @staticmethod
+    def filter_dim(da: xr.DataArray, dim: str | list[str]):
+        """
+        Filter the dimensions to be reduced by removing those not on the variable.
+
+        The first dimension is never removed as it is considered the "main" dimension and not having it is an error.
+        This is meant to be used within a function sent to :py:meth:`Grouper.apply`, like those decorated with :py:func:`map_groups`.
+        """
+        if isinstance(dim, str):
+            return dim
+        return [dim[0]] + [d for d in dim[1:] if d in da.dims]
+
 
 def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     """
