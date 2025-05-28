@@ -451,7 +451,7 @@ class Grouper(Parametrizable):
         if main_only:
             dims = self.dim
         else:
-            dims = [self.dim] + self.add_dims
+            dims = [self.dim] + [d for d in self.add_dims if d in grpd.dims]
             if self.window > 1:
                 dims += ["window"]
 
