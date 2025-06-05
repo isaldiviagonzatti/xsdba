@@ -137,7 +137,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.4.1-dev.0"
+current_version = "0.4.1-dev.2"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -368,6 +368,7 @@ ignore = [
   "D401", # non-imperative-mood
   # WIP xsdba
   "E402", # top import module
+  "E712", # use cond == False
   "D200",
   "FLY002",
   "N801",
