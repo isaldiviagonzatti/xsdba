@@ -5,7 +5,7 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`)
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Juliette Lavoie (:user:`juliettelavoie`)
 
 Changes
 ^^^^^^^
@@ -18,7 +18,8 @@ Changes
 
 Fixes
 ^^^^^
-* ``xsdba.processing.from_additive_space`` now handles units correctly by using `convert_units_to` instead of `harmonize_units`. (:pull:`146`).
+* Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
+* Fix ``xsdba.processing.from_additive_space`` to handles units correctly by using `convert_units_to` instead of `harmonize_units`. (:pull:`146`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
