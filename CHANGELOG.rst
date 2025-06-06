@@ -5,7 +5,7 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`)
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Juliette Lavoie (:user:`juliettelavoie`)
 
 Changes
 ^^^^^^^
@@ -18,7 +18,7 @@ Changes
 * `convert_units_to` now wraps a private function `_convert_units_to`. (:pull:`145`).
 Fixes
 ^^^^^
-* No change.
+* Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
