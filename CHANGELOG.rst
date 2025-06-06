@@ -15,6 +15,7 @@ Changes
 * New functions related to spectral properties in Fourier space:
     * Perform a spectral filter with ``xsdba.processing.spectral_filter`` with a low-pass filter with a cosine-squared profile by default. (:pull:`88`).
     * New spatial diagnostic to compute the spectral variance of a given field ``xsdba.properties.spectral_variance``. (:pull:`88`).
+* ``xsdba.jitter_over_thresh`` is available directly in training methods by passing the `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd`  arguments. (:pull:`110`).
 
 Fixes
 ^^^^^
@@ -37,7 +38,6 @@ Changes
 * `xsdba` now supports Python3.13. Metadata and CI have been adjusted. (:pull:`105`).
 * Unpinned `numpy` and raised minimum supported versions of a few scientific libraries. (:pull:`105`).
 * More code that needed to be ported from `xclim` has been added. This includes mainly documentation, as well as testing utilities and a benchmark notebook. (:pull:`107`).
-* ``xsdba.jitter_over_thresh`` is available directly in training methods by passing the `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd`  arguments. (:pull:`110`).
 
 Fixes
 ^^^^^
