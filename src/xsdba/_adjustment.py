@@ -25,7 +25,7 @@ from .units import convert_units_to
 from .utils import _fitfunc_1d
 
 
-def _adapt_freq_sim(ds, adapt_freq_thresh: str):
+def _adapt_freq_sim(ds: xr.Dataset, adapt_freq_thresh: str):
     """Adapt frequency of null values of `sim` in order to match `ref`."""
     if "hist" in ds.data_vars:
         ds = ds.rename({"hist": "sim"})
