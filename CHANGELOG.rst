@@ -17,6 +17,7 @@ Changes
     * New spatial diagnostic to compute the spectral variance of a given field ``xsdba.properties.spectral_variance``. (:pull:`88`).
 * ``xsdba.units.convert_units_to`` now wraps a private function ``_convert_units_to``. (:pull:`145`).
 
+
 Fixes
 ^^^^^
 * Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
