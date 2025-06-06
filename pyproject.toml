@@ -46,6 +46,7 @@ dependencies = [
   "packaging",
   "pandas >=2.2.0",
   "pint>=0.24.4",
+  "rich >=13.7.0",
   "scipy >=1.11.0",
   "statsmodels >=0.14.2",
   "typer >=0.12.3",
@@ -107,7 +108,12 @@ extras = [
   "POT >=0.9.4",
   "xclim >=0.56.0"
 ]
-all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]"]
+sbck = [
+  # The sbck dependency requires the "eigen3"/"libeigen3-dev" package to be installed on the system.
+  # "pybind11" is SBCK a setup dependency and should be installed prior to building the package.
+  "sbck >=1.4.0"
+]
+all = ["xsdba[dev]", "xsdba[docs]", "xsdba[extras]", "xsdba[sbck]"]
 
 [project.scripts]
 xsdba = "xsdba.cli:app"
@@ -130,7 +136,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.4.0"
+current_version = "0.4.1-dev.2"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -210,16 +216,15 @@ source = ["xsdba"]
 [tool.deptry]
 extend_exclude = ["docs"]
 ignore_notebooks = true
-pep621_dev_dependency_groups = ["all", "dev", "docs"]
+pep621_dev_dependency_groups = ["all", "dev", "docs", "extras", "sbck"]
 
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
 "POT" = "ot"
+"sbck" = "SBCK"
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["SBCK"]
-DEP003 = ["rich"]
-DEP004 = ["fastnanquantile", "ot", "pooch", "xclim"] # remove some of these in xsdba>=0.4.0
+DEP004 = ["fastnanquantile", "ot", "matplotlib", "pooch", "SBCK", "xclim"]
 
 [tool.flit.sdist]
 include = [
@@ -362,6 +367,7 @@ ignore = [
   "D401", # non-imperative-mood
   # WIP xsdba
   "E402", # top import module
+  "E712", # use cond == False
   "D200",
   "FLY002",
   "N801",

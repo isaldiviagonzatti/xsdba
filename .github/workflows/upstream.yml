@@ -39,12 +39,12 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
           disable-sudo: true
           egress-policy: audit
       - name: Start Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@2601fdbc7d6e39e043a9b5bd11cc40481efb1d8e # v4.4.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@173a7c84b6d28fc44a6c2ac4985a60ed4b5b3661 # v4.7
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
@@ -73,7 +73,7 @@ jobs:
           micromamba list
           python -m pip check || true
       - name: Setup Python Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@2601fdbc7d6e39e043a9b5bd11cc40481efb1d8e # v4.4.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@173a7c84b6d28fc44a6c2ac4985a60ed4b5b3661 # v4.7
         with:
           task: get-measurement
           label: 'Environment Setup (Upstream, Python${{ matrix.python-version }})'
@@ -100,13 +100,13 @@ jobs:
           issue-title: "⚠️ Nightly upstream-dev CI failed for Python${{ matrix.python-version }} ⚠️"
           log-path: output-${{ matrix.python-version }}-log.jsonl
       - name: Tests measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@2601fdbc7d6e39e043a9b5bd11cc40481efb1d8e # v4.4.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@173a7c84b6d28fc44a6c2ac4985a60ed4b5b3661 # v4.7
         with:
           task: get-measurement
           label: 'Testing and Reporting (Upstream, Python${{ matrix.python-version }})'
         continue-on-error: true
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@2601fdbc7d6e39e043a9b5bd11cc40481efb1d8e # v4.4.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@173a7c84b6d28fc44a6c2ac4985a60ed4b5b3661 # v4.7
         with:
           task: display-results
         continue-on-error: true
