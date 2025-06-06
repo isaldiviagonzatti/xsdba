@@ -643,7 +643,11 @@ class DetrendedQuantileMapping(TrainAdjust):
             standard_name="Scaling factor",
             description="Scaling factor making the mean of hist match the one of hist.",
         )
-        return ds, {"group": group, "kind": kind}
+        return ds, {
+            "group": group,
+            "kind": kind,
+            "adapt_freq_thresh": adapt_freq_thresh,
+        }
 
     def _adjust(
         self,
@@ -659,6 +663,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             detrend=detrend,
             group=self.group,
             kind=self.kind,
+            adapt_freq_thresh=self.adapt_freq_thresh,
         ).scen
         # Detrending needs units.
         scen.attrs["units"] = sim.units
