@@ -21,6 +21,7 @@ Changes
 Fixes
 ^^^^^
 * Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
+* Fix ``xsdba.processing.from_additive_space`` to handles units correctly by using `convert_units_to` instead of `harmonize_units`. (:pull:`146`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
