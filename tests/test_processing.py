@@ -90,7 +90,7 @@ def test_jitter_log(dtype, delta, test):
         out = jitter(da, lower=f"{delta:.20f} %", minimum=f"{test_val:.20f} %")
     else:
         out = jitter(da, upper=f"{1 - delta:.20f} %", maximum=f"{test_val:.20f} %")
-    assert (np.log(out / (1 - out)).notnull()).all()
+    assert (np.isfinite(np.log(out / (1 - out)))).all()
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
