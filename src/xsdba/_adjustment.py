@@ -33,8 +33,6 @@ from .utils import _fitfunc_1d
 
 def _adapt_freq_sim(ds: xr.Dataset, adapt_freq_thresh: str):
     """Adapt frequency of null values of `sim` in order to match `ref`."""
-    if "hist" in ds.data_vars:
-        ds = ds.rename({"hist": "sim"})
     thresh = convert_units_to(adapt_freq_thresh, ds.sim)
     dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
     return _adapt_freq.func(ds, thresh=thresh, dim=dim)
@@ -47,6 +45,7 @@ def _preprocess_dataset(
     jitter_over_thresh_value: str | None = None,
     jitter_over_thresh_upper_bnd: str | None = None,
 ):
+    # _adapt_freq_sim  expects `sim` and we can uniformize the notation
     if needs_rename := ("hist" in ds):
         ds = ds.rename({"hist": "sim"})
 
@@ -1268,12 +1267,12 @@ def otc_adjust(
 
     if adapt_freq_thresh is not None:
         for var, thresh in adapt_freq_thresh.items():
-            hist.loc[{pts_dim: var}] = _adapt_freq_sim(
-                xr.Dataset(
-                    {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
-                ),
-                thresh,
-            ).sim_ad
+            ds0 = xr.Dataset(
+                {"ref": ref.sel({pts_dim: var}), "sim": hist.sel({pts_dim: var})}
+            )
+            hist.loc[{pts_dim: var}] = _preprocess_dataset(
+                ds0, adapt_freq_thresh=thresh
+            ).sim
 
     ref_map = {d: f"ref_{d}" for d in dim}
     ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
@@ -1513,14 +1512,14 @@ def dotc_adjust(
         for var, thresh in adapt_freq_thresh.items():
             if thresh is not None:
                 ds0 = xr.Dataset(
-                    {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
+                    {"ref": ref.sel({pts_dim: var}), "sim": hist.sel({pts_dim: var})}
                 )
-                ds0 = _adapt_freq_sim(ds0, thresh)
-                hist.loc[{pts_dim: var}] = ds0.sim_ad
-                ds0 = ds0.drop_vars("sim_ad")
-                ds0["ref"] = ref.loc[{pts_dim: var}]
+                ds0 = _preprocess_dataset(ds0, adapt_freq_thresh=thresh)
+                hist.loc[{pts_dim: var}] = ds0.sim
                 ds0["sim"] = sim.loc[{pts_dim: var}]
-                sim.loc[{pts_dim: var}] = _adapt_freq_sim(ds0, thresh).sim_ad
+                sim.loc[{pts_dim: var}] = _preprocess_dataset(
+                    ds0, adapt_freq_thresh=thresh
+                ).sim
 
     # Drop data added by map_blocks and prepare for apply_ufunc
     hist_map = {d: f"hist_{d}" for d in dim}
