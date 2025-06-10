@@ -5,7 +5,7 @@ Changelog
 `Unreleased <https://github.com/Ouranosinc/xsdba>`_ (latest)
 ------------------------------------------------------------
 
-Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Juliette Lavoie (:user:`juliettelavoie`) and Pascal Bourgault (:user:`aulemahal`).
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`).
 
 Changes
 ^^^^^^^
