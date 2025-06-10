@@ -31,13 +31,6 @@ from .units import convert_units_to
 from .utils import _fitfunc_1d
 
 
-def _adapt_freq_sim(ds: xr.Dataset, adapt_freq_thresh: str):
-    """Adapt frequency of null values of `sim` in order to match `ref`."""
-    thresh = convert_units_to(adapt_freq_thresh, ds.sim)
-    dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
-    return _adapt_freq.func(ds, thresh=thresh, dim=dim)
-
-
 def _preprocess_dataset(
     ds: xr.Dataset,
     adapt_freq_thresh: str | None = None,
@@ -45,7 +38,7 @@ def _preprocess_dataset(
     jitter_over_thresh_value: str | None = None,
     jitter_over_thresh_upper_bnd: str | None = None,
 ):
-    # _adapt_freq_sim  expects `sim` and we can uniformize the notation
+    # uniformize the notation, change back at the end
     if needs_rename := ("hist" in ds):
         ds = ds.rename({"hist": "sim"})
 
@@ -63,7 +56,10 @@ def _preprocess_dataset(
         )
 
     if adapt_freq_thresh:
-        out = _adapt_freq_sim(ds, adapt_freq_thresh)
+        dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
+        out = _adapt_freq.func(
+            ds, dim=dim, thresh=convert_units_to(adapt_freq_thresh, ds.sim)
+        )
         ds["sim"], ds["dP0"], ds["P0_ref"], ds["pth"] = (
             out[k] for k in ["sim_ad", "dP0", "P0_ref", "pth"]
         )
