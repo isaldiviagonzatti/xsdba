@@ -20,7 +20,13 @@ from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
 from .options import set_options
-from .processing import escore, jitter_under_thresh, reordering, standardize
+from .processing import (
+    escore,
+    jitter_over_thresh,
+    jitter_under_thresh,
+    reordering,
+    standardize,
+)
 from .units import convert_units_to
 from .utils import _fitfunc_1d
 
@@ -32,6 +38,43 @@ def _adapt_freq_sim(ds: xr.Dataset, adapt_freq_thresh: str):
     thresh = convert_units_to(adapt_freq_thresh, ds.sim)
     dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
     return _adapt_freq.func(ds, thresh=thresh, dim=dim)
+
+
+def _preprocess_dataset(
+    ds: xr.Dataset,
+    adapt_freq_thresh: str | None = None,
+    jitter_under_thresh_value: str | None = None,
+    jitter_over_thresh_value: str | None = None,
+    jitter_over_thresh_upper_bnd: str | None = None,
+):
+    if needs_rename := ("hist" in ds):
+        ds = ds.rename({"hist": "sim"})
+    if jitter_under_thresh_value:
+        ds["sim"] = jitter_under_thresh(ds.sim, jitter_under_thresh_value)
+    if (
+        None in (s := {jitter_over_thresh_value, jitter_over_thresh_upper_bnd})
+        and len(s) > 1
+    ):
+        raise ValueError(
+            "`jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must "
+            "be both specified or both `None` (default)"
+        )
+    if jitter_over_thresh_value:
+        ds["sim"] = jitter_over_thresh(
+            ds.sim, jitter_over_thresh_value, jitter_over_thresh_upper_bnd
+        )
+    if adapt_freq_thresh:
+        out = _adapt_freq_sim(ds, adapt_freq_thresh)
+        ds["sim"], ds["dP0"], ds["P0_ref"], ds["pth"] = (
+            out[k] for k in ["sim_ad", "dP0", "P0_ref", "pth"]
+        )
+    else:
+        ds["dP0"] = ds["P0_ref"] = ds["pth"] = xr.full_like(
+            ds["sim"][{"time": 0}], np.nan
+        )
+    if needs_rename:
+        ds = ds.rename({"sim": "hist"})
+    return ds
 
 
 @map_groups(
@@ -50,6 +93,8 @@ def dqm_train(
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
+    jitter_over_thresh_value: str | None = None,
+    jitter_over_thresh_upper_bnd: str | None = None,
 ) -> xr.Dataset:
     """
     Train step on one group.
@@ -70,27 +115,32 @@ def dqm_train(
         Threshold for frequency adaptation. See :py:class:`xsdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
     jitter_under_thresh_value : str, optional
-        Threshold under which to add uniform random noise to values, a quantity with units.
+        Threshold under which a uniform random noise is added to values, a quantity with units.
         Default is None, meaning that jitter under thresh is not performed.
+    jitter_over_thresh_value : str, optional
+        Threshold above which a uniform random noise is added to values, a quantity with units.
+        Default is None, meaning that jitter over thresh is not performed.
+    jitter_over_thresh_upper_bnd : str, optional
+        Maximum possible value for the random noise, a quantity with units.
+        Default is None, meaning that jitter over thresh is not performed.
 
     Returns
     -------
     xr.Dataset
         The dataset containing the adjustment factors, the quantiles over the training data, and the scaling factor.
-    """
-    ds["hist"] = (
-        jitter_under_thresh(ds.hist, jitter_under_thresh_value)
-        if jitter_under_thresh_value
-        else ds.hist
-    )
 
-    if adapt_freq_thresh:
-        out = _adapt_freq_sim(ds, adapt_freq_thresh)
-        ds["hist"], dP0, P0_ref, pth = (
-            out[k] for k in ["sim_ad", "dP0", "P0_ref", "pth"]
-        )
-    else:
-        dP0 = pth = P0_ref = xr.full_like(ds["hist"][{"time": 0}], np.nan)
+    Notes
+    -----
+    `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must be both be specified to
+    use `jitter_over_thresh`, or both be None (default) to skip it.
+    """
+    ds = _preprocess_dataset(
+        ds,
+        adapt_freq_thresh,
+        jitter_under_thresh_value,
+        jitter_over_thresh_value,
+        jitter_over_thresh_upper_bnd,
+    )
 
     refn = u.apply_correction(ds.ref, u.invert(ds.ref.mean(dim), kind), kind)
     histn = u.apply_correction(ds.hist, u.invert(ds.hist.mean(dim), kind), kind)
@@ -126,6 +176,8 @@ def eqm_train(
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
+    jitter_over_thresh_value: str | None = None,
+    jitter_over_thresh_upper_bnd: str | None = None,
 ) -> xr.Dataset:
     """
     EQM: Train step on one group.
@@ -146,22 +198,30 @@ def eqm_train(
         Threshold for frequency adaptation. See :py:class:`xsdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
     jitter_under_thresh_value : str, optional
-        Threshold under which to add uniform random noise to values, a quantity with units.
+        Threshold under which a uniform random noise is added to values, a quantity with units.
         Default is None, meaning that jitter under thresh is not performed.
+    jitter_over_thresh_upper_bnd : str, optional
+        Maximum possible value for the random noise, a quantity with units.
+        Default is None, meaning that jitter over thresh is not performed.
 
     Returns
     -------
     xr.Dataset
         The dataset containing the adjustment factors and the quantiles over the training data.
+
+    Notes
+    -----
+    `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must be both be specified to
+    use `jitter_over_thresh`, or both be None (default) to skip it.
     """
-    ds["hist"] = (
-        jitter_under_thresh(ds.hist, jitter_under_thresh_value)
-        if jitter_under_thresh_value
-        else ds.hist
+    ds = _preprocess_dataset(
+        ds,
+        adapt_freq_thresh,
+        jitter_under_thresh_value,
+        jitter_over_thresh_value,
+        jitter_over_thresh_upper_bnd,
     )
-    ds["hist"] = (
-        _adapt_freq_sim(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
-    )
+
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
     hist_q = nbu.quantile(ds.hist, quantiles, dim)
 
@@ -491,7 +551,13 @@ def mbcn_adjust(
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
 def qm_adjust(
-    ds: xr.Dataset, *, group: Grouper, interp: str, extrapolation: str, kind: str
+    ds: xr.Dataset,
+    *,
+    group: Grouper,
+    interp: str,
+    extrapolation: str,
+    kind: str,
+    adapt_freq_thresh: str | None = None,
 ) -> xr.Dataset:
     """
     QM (DQM and EQM): Adjust step on one block.
@@ -512,12 +578,17 @@ def qm_adjust(
         The extrapolation method to use.
     kind : str
         The kind of correction to compute. See :py:func:`xsdba.utils.get_correction`.
+    adapt_freq_thresh : str, optional
+        Threshold for frequency adaptation. See :py:class:`xsdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
 
     Returns
     -------
     xr.Dataset
         The adjusted data.
     """
+    ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+
     af = u.interp_on_quantiles(
         ds.sim,
         ds.hist_q,
@@ -576,6 +647,8 @@ def dqm_adjust(
     xr.Dataset
         The adjusted data and the trend.
     """
+    ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+
     if adapt_freq_thresh:
         out = _adapt_freq_sim(ds, adapt_freq_thresh).sim_ad
         ds["sim"] = out
@@ -611,9 +684,17 @@ def dqm_adjust(
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
-def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Dataset:
+def qdm_adjust(
+    ds: xr.Dataset,
+    *,
+    group: Grouper,
+    interp: str,
+    extrapolation: str,
+    kind: str,
+    adapt_freq_thresh: str | None = None,
+) -> xr.Dataset:
     """
-    QDM: Adjust process on one block.
+    QDM adjustment on one block.
 
     Parameters
     ----------
@@ -622,7 +703,27 @@ def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Data
             af : Adjustment factors
             hist_q : Quantiles over the training data
             sim : Data to adjust.
+    group : Grouper
+        The grouper object.
+    interp : str
+        The interpolation method to use.
+    kind : str
+        The kind of correction to compute. See :py:func:`xsdba.utils.get_correction`.
+    extrapolation : str
+        The extrapolation method to use.
+    detrend : int | PolyDetrend
+        The degree of the polynomial detrending to apply. If 0, no detrending is applied.
+    adapt_freq_thresh : str, optional
+        Threshold for frequency adaptation. See :py:class:`xsdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
+
+    Returns
+    -------
+    xr.Dataset
+        The adjusted data.
     """
+    ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
     af = u.interp_on_quantiles(
         sim_q,
