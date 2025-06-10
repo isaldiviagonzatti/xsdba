@@ -49,20 +49,20 @@ def _preprocess_dataset(
 ):
     if needs_rename := ("hist" in ds):
         ds = ds.rename({"hist": "sim"})
+
     if jitter_under_thresh_value:
         ds["sim"] = jitter_under_thresh(ds.sim, jitter_under_thresh_value)
-    if (
-        None in (s := {jitter_over_thresh_value, jitter_over_thresh_upper_bnd})
-        and len(s) > 1
-    ):
+
+    if (jitter_over_thresh_value is None) ^ (jitter_over_thresh_upper_bnd is None):
         raise ValueError(
             "`jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd` must "
-            "be both specified or both `None` (default)"
+            "both be specified or both be `None` (default)"
         )
     if jitter_over_thresh_value:
         ds["sim"] = jitter_over_thresh(
             ds.sim, jitter_over_thresh_value, jitter_over_thresh_upper_bnd
         )
+
     if adapt_freq_thresh:
         out = _adapt_freq_sim(ds, adapt_freq_thresh)
         ds["sim"], ds["dP0"], ds["P0_ref"], ds["pth"] = (
@@ -72,8 +72,10 @@ def _preprocess_dataset(
         ds["dP0"] = ds["P0_ref"] = ds["pth"] = xr.full_like(
             ds["sim"][{"time": 0}], np.nan
         )
+
     if needs_rename:
         ds = ds.rename({"sim": "hist"})
+
     return ds
 
 
@@ -157,9 +159,9 @@ def dqm_train(
             "af": af,
             "hist_q": hist_q,
             "scaling": scaling,
-            "dP0": dP0,
-            "P0_ref": P0_ref,
-            "pth": pth,
+            "dP0": ds.dP0,
+            "P0_ref": ds.P0_ref,
+            "pth": ds.pth,
         }
     )
 
@@ -167,6 +169,9 @@ def dqm_train(
 @map_groups(
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
+    dP0=[Grouper.PROP],
+    P0_ref=[Grouper.PROP],
+    pth=[Grouper.PROP],
 )
 def eqm_train(
     ds: xr.Dataset,
@@ -227,7 +232,15 @@ def eqm_train(
 
     af = u.get_correction(hist_q, ref_q, kind)
 
-    return xr.Dataset(data_vars={"af": af, "hist_q": hist_q})
+    return xr.Dataset(
+        data_vars={
+            "af": af,
+            "hist_q": hist_q,
+            "dP0": ds.dP0,
+            "P0_ref": ds.P0_ref,
+            "pth": ds.pth,
+        }
+    )
 
 
 def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardize):
@@ -648,10 +661,8 @@ def dqm_adjust(
         The adjusted data and the trend.
     """
     ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+    ds = ds.drop_vars("dP0", "pth", "P0_ref")
 
-    if adapt_freq_thresh:
-        out = _adapt_freq_sim(ds, adapt_freq_thresh).sim_ad
-        ds["sim"] = out
     scaled_sim = u.apply_correction(
         ds.sim,
         u.broadcast(
@@ -1257,12 +1268,12 @@ def otc_adjust(
 
     if adapt_freq_thresh is not None:
         for var, thresh in adapt_freq_thresh.items():
-            hist.loc[var] = _adapt_freq_sim(
+            hist.loc[{pts_dim: var}] = _adapt_freq_sim(
                 xr.Dataset(
                     {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
                 ),
                 thresh,
-            )
+            ).sim_ad
 
     ref_map = {d: f"ref_{d}" for d in dim}
     ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
@@ -1500,12 +1511,16 @@ def dotc_adjust(
 
     if adapt_freq_thresh is not None:
         for var, thresh in adapt_freq_thresh.items():
-            hist.loc[var] = _adapt_freq_sim(
-                xr.Dataset(
+            if thresh is not None:
+                ds0 = xr.Dataset(
                     {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
-                ),
-                thresh,
-            )
+                )
+                ds0 = _adapt_freq_sim(ds0, thresh)
+                hist.loc[{pts_dim: var}] = ds0.sim_ad
+                ds0 = ds0.drop_vars("sim_ad")
+                ds0["ref"] = ref.loc[{pts_dim: var}]
+                ds0["sim"] = sim.loc[{pts_dim: var}]
+                sim.loc[{pts_dim: var}] = _adapt_freq_sim(ds0, thresh).sim_ad
 
     # Drop data added by map_blocks and prepare for apply_ufunc
     hist_map = {d: f"hist_{d}" for d in dim}

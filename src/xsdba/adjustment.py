@@ -535,6 +535,9 @@ class EmpiricalQuantileMapping(TrainAdjust):
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
+        if adapt_freq_thresh is None:
+            ds = ds.drop_vars(["dP0", "P0_ref", "pth"])
+
         return ds, {"group": group, "kind": kind}
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
@@ -735,6 +738,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         if OPTIONS[EXTRA_OUTPUT]:
             out.sim_q.attrs.update(long_name="Group-wise quantiles of `sim`.")
             return out
+
         return out.scen
 
 
