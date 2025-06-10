@@ -58,8 +58,8 @@ def _preprocess_dataset(
     if adapt_freq_thresh:
         dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
         thresh = convert_units_to(adapt_freq_thresh, ds.sim)
-        out = _adapt_freq.func(ds, dim=dim, thresh=thresh)
-        ds = ds.assign(sim=out.sim_ad, dp0=out.dP0, P0_ref=out.P0_ref, pth=out.pth)
+        out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
+        ds = ds.assign({v: out[v] for v in out.data_vars})
     else:
         dummy = xr.full_like(ds["sim"][{"time": 0}], np.nan)
         ds = ds.assign(dP0=dummy, P0_ref=dummy, pth=dummy)
