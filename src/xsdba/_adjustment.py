@@ -199,7 +199,7 @@ def eqm_train(
     ref_dim = Grouper.filter_dim(ds.ref, dim)
     sim_dim = Grouper.filter_dim(ds.hist, dim)
     ref_q = nbu.quantile(ds.ref, quantiles, ref_dim)
-    hist_q = nbu.quantile(ds.hist, quantiles, sim_dim
+    hist_q = nbu.quantile(ds.hist, quantiles, sim_dim)
     af = u.get_correction(hist_q, ref_q, kind)
 
     return xr.Dataset(data_vars={"af": af, "hist_q": hist_q})
