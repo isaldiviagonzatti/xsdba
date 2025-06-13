@@ -1231,13 +1231,21 @@ def test_raise_on_multiple_chunks(timelonlatseries):
         EmpiricalQuantileMapping.train(ref, ref, group=Grouper("time.month"))
 
 
-def test_raise_on_5d_grouping(timelonlatseries):
+@pytest.mark.parametrize(
+    "success",
+    [[True, False]],
+)
+def test_raise_on_5d_grouping(timelonlatseries, success):
     attrs_tas = {"units": "K", "kind": ADDITIVE}
     ref = timelonlatseries(np.arange(730).astype(float), attrs=attrs_tas).chunk(
-        {"time": 365}
+        {"time": -1}
     )
-    with pytest.raises(NotImplementedError):
-        DetrendedQuantileMapping.train(ref, ref, group=Grouper("5D", 1))
+    if success:
+        ref = stack_variables(ref.to_dataset(name="tas"))
+        MBCn.train(ref, ref, base_kws={"group": Grouper("5D", 1)})
+    else:
+        with pytest.raises(NotImplementedError):
+            DetrendedQuantileMapping.train(ref, ref, group=Grouper("5D", 1))
 
 
 def test_default_grouper_understood(timelonlatseries):
