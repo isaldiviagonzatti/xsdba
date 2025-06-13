@@ -96,7 +96,7 @@ class BaseAdjustment(ParametrizableWithDataset):
 
         Also raises if :py:attr:`BaseAdjustment._allow_diff_calendars` is False and calendars differ.
         """
-        # Grouper("5D", window) is only a special option for MBCn
+        # Grouper("5D", window) is a special grouping only implemented for MBCn
         if not cls._allow_5d_grouping and group.name == "5D":
             raise NotImplementedError(
                 "`group=Grouper('5D', window)` is a special grouping currently only supported for MBCn."
