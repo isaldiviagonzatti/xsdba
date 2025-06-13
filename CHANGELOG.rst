@@ -18,6 +18,7 @@ Changes
     * New spatial diagnostic to compute the spectral variance of a given field ``xsdba.properties.spectral_variance``. (:pull:`88`).
 * ``xsdba.units.convert_units_to`` now wraps a private function ``_convert_units_to``. (:pull:`145`).
 * ``xsdba.jitter_over_thresh`` is available directly in training methods by passing the `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd`  arguments. (:pull:`110`).
+* Throw an error if `group=Grouper('5D',window)` is used with a biasadjust method other than `MBCn`.
 
 Fixes
 ^^^^^
