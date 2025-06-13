@@ -78,6 +78,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     _allow_diff_calendars = True
     _allow_diff_training_times = True
     _allow_diff_time_sizes = True
+    _allow_5d_grouping = False
     _attribute = "_xsdba_adjustment"
 
     def __init__(self, *args, _trained=False, **kwargs):
@@ -95,6 +96,12 @@ class BaseAdjustment(ParametrizableWithDataset):
 
         Also raises if :py:attr:`BaseAdjustment._allow_diff_calendars` is False and calendars differ.
         """
+        # Grouper("5D", window) is a special grouping only implemented for MBCn
+        if not cls._allow_5d_grouping and group.name == "5D":
+            raise NotImplementedError(
+                "`group=Grouper('5D', window)` is a special grouping currently only supported for MBCn."
+            )
+
         for inda in inputs:
             if uses_dask(inda) and len(inda.chunks[inda.get_axis_num(group.dim)]) > 1:
                 raise ValueError(
@@ -1811,6 +1818,7 @@ class MBCn(TrainAdjust):
     _allow_diff_calendars = False
     _allow_diff_training_times = False
     _allow_diff_time_sizes = False
+    _allow_5d_grouping = True
 
     @classmethod
     def _train(
