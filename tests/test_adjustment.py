@@ -4,6 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import xarray as xr
+import xclim
 from scipy.stats import genpareto, norm, uniform
 
 from xsdba import adjustment
@@ -23,6 +24,7 @@ from xsdba.adjustment import (
 from xsdba.base import Grouper, stack_periods
 from xsdba.options import set_options
 from xsdba.processing import (
+    jitter_over_thresh,
     jitter_under_thresh,
     stack_variables,
     uniform_noise_like,
@@ -751,6 +753,58 @@ class TestQM:
         EmpiricalQuantileMapping._allow_diff_training_times = False
         assert (ds.af == ds_fut.af).all()
 
+    def test_jitter_under_thresh(self, gosset):
+        thr = "0.01 mm/d"
+        ref, hist = (
+            xr.open_dataset(
+                gosset.fetch(f"sdba/{file}"),
+            )
+            .isel(location=1)
+            .sel(time=slice("1950", "1980"))
+            .pr
+            for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
+        )
+        with xclim.core.units.units.context("hydro"):
+            np.random.seed(42)
+            af_jit_inside = EmpiricalQuantileMapping.train(
+                ref, hist, jitter_under_thresh_value=thr, group="time"
+            ).ds.af
+
+            np.random.seed(42)
+            hist_jit = jitter_under_thresh(hist, thr)
+            af_jit_outside = EmpiricalQuantileMapping.train(
+                ref, hist_jit, group="time"
+            ).ds.af
+        np.testing.assert_array_almost_equal(af_jit_inside, af_jit_outside, 2)
+
+    def test_jitter_over_thresh(self, gosset):
+        thr = "2 K"
+        ubnd = "3 K"
+        ref, hist = (
+            xr.open_dataset(
+                gosset.fetch(f"sdba/{file}"),
+            )
+            .isel(location=1)
+            .sel(time=slice("1950", "1980"))
+            .tasmax
+            for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
+        )
+        np.random.seed(42)
+        af_jit_inside = EmpiricalQuantileMapping.train(
+            ref,
+            hist,
+            jitter_over_thresh_value=thr,
+            jitter_over_thresh_upper_bnd=ubnd,
+            group="time",
+        ).ds.af
+
+        np.random.seed(42)
+        hist_jit = jitter_over_thresh(hist, thr, ubnd)
+        af_jit_outside = EmpiricalQuantileMapping.train(
+            ref, hist_jit, group="time"
+        ).ds.af
+        np.testing.assert_array_almost_equal(af_jit_inside, af_jit_outside, 2)
+
 
 @pytest.mark.slow
 class TestMBCn:
@@ -1175,6 +1229,23 @@ def test_raise_on_multiple_chunks(timelonlatseries):
     )
     with pytest.raises(ValueError):
         EmpiricalQuantileMapping.train(ref, ref, group=Grouper("time.month"))
+
+
+@pytest.mark.parametrize(
+    "success",
+    [[True, False]],
+)
+def test_raise_on_5d_grouping(timelonlatseries, success):
+    attrs_tas = {"units": "K", "kind": ADDITIVE}
+    ref = timelonlatseries(np.arange(730).astype(float), attrs=attrs_tas).chunk(
+        {"time": -1}
+    )
+    if success:
+        ref = stack_variables(ref.to_dataset(name="tas"))
+        MBCn.train(ref, ref, base_kws={"group": Grouper("5D", 1)})
+    else:
+        with pytest.raises(NotImplementedError):
+            DetrendedQuantileMapping.train(ref, ref, group=Grouper("5D", 1))
 
 
 def test_default_grouper_understood(timelonlatseries):
