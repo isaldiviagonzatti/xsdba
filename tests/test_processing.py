@@ -76,8 +76,8 @@ def test_jitter_other_dtypes(dtype, delta, test_val):
     out_low = jitter(
         da, lower=f"{test_val * (1 + delta):.20f} %", minimum=f"{test_val:.20f} %"
     )
-    assert (out_high <= test_val).all()
-    assert (out_low >= test_val).all()
+    assert (out_high < test_val).all()
+    assert (out_low > test_val).all()
 
 
 @pytest.mark.parametrize("test", ["lower", "upper"])
