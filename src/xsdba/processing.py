@@ -519,6 +519,7 @@ def to_additive_space(
     lower_bound: str,
     upper_bound: str | None = None,
     trans: str = "log",
+    clip_to_bounds: bool = False,
 ):
     r"""
     Transform a non-additive variable into an additive space by the means of a log or logit transformation.
@@ -538,6 +539,9 @@ def to_additive_space(
         The data should only have values strictly smaller than this bound.
     trans : {'log', 'logit'}
         The transformation to use. See notes.
+    clip_to_bounds : bool
+        If `True`, values are clipped to ensure data > lower_bound  and data < upper_bound (if specified).
+        Defaults to `False`.
 
     See Also
     --------
@@ -592,6 +596,16 @@ def to_additive_space(
             out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
+
+    # clip bounds
+    if clip_to_bounds:
+        low = np.nextafter(lower_bound, np.inf, dtype=np.float32)
+        high = (
+            None
+            if upper_bound is None
+            else np.nextafter(upper_bound, -np.inf, dtype=np.float32)
+        )
+        out = out.clip(low, high)
 
     # Attributes to remember all this.
     out = out.assign_attrs(xsdba_transform=trans)
