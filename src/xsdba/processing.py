@@ -541,7 +541,7 @@ def to_additive_space(
         The transformation to use. See notes.
     clip_to_bounds : bool
         If `True`, values are clipped to ensure `data > lower_bound`  and `data < upper_bound` (if specified).
-        Defaults to `False`.
+        Defaults to `False`. `data` must be in the range [lower_bound, upper_bound], else an error is thrown.
 
     See Also
     --------
@@ -606,7 +606,7 @@ def to_additive_space(
             raise ValueError(
                 "The input dataset contains values outside of the range [lower_bound, upper_bound] "
                 "(with upper_bound given by infinity is not specified). Clipping the values to the range "
-                "]lower_bound, upper_bound[ will silence this problem. Check if the bounds are taken appropriately or "
+                "]lower_bound, upper_bound[ is not allowed in this case. Check if the bounds are taken appropriately or "
                 "if your input dataset has unphysical values."
             )
 
