@@ -540,7 +540,7 @@ def to_additive_space(
     trans : {'log', 'logit'}
         The transformation to use. See notes.
     clip_to_bounds : bool
-        If `True`, values are clipped to ensure data > lower_bound  and data < upper_bound (if specified).
+        If `True`, values are clipped to ensure `data > lower_bound`  and `data < upper_bound` (if specified).
         Defaults to `False`.
 
     See Also
