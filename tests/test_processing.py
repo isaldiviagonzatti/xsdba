@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+import xclim
 
+from xsdba._processing import _adapt_freq
 from xsdba.adjustment import EmpiricalQuantileMapping
 from xsdba.base import Grouper
 from xsdba.processing import (
@@ -112,6 +114,39 @@ def test_adapt_freq(use_dask, random):
     assert sim_ad.units == "mm d-1"
     assert sim_ad.attrs["references"].startswith("Themeßl")
     assert pth.units == "mm d-1"
+
+
+def test_adapt_freq_adjust(gosset):
+    ref = (
+        xr.open_dataset(gosset.fetch("sdba/ahccd_1950-2013.nc"))
+        .sel(time=slice("1950", "1969"))
+        .pr.fillna(0)
+    )
+    sim = (
+        xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
+        .sel(time=slice("1950", "1989"))
+        .pr.fillna(0)
+    )
+    sim = xclim.core.units.convert_units_to(sim, ref)  # mm/d
+
+    sim.loc[{"time": slice("1950", "1965")}] = 0
+    sim.loc[{"time": slice("1970", "1980")}] = 0
+    sim = jitter_under_thresh(sim, "0.001 mm/d")
+
+    hist = sim.sel(time=slice("1950", "1969"))
+    outh = _adapt_freq.func(xr.Dataset(dict(ref=ref, sim=hist)), dim="time", thresh=1)
+    hist_ad = outh.sim_ad
+    outs = _adapt_freq.func(
+        xr.Dataset(dict(sim=sim, dP0=outh.dP0, pth=outh.pth, P0_ref=outh.P0_ref)),
+        dim="time",
+        thresh=1,
+    )
+    sim_ad = outs.sim_ad
+    sim_ad_h = sim_ad.sel(time=slice("1950", "1969"))
+    # np.testing.assert_allclose((hist_ad<=1).sum(dim="time"), (ref<=1).sum(dim="time"))
+    np.testing.assert_allclose(
+        (sim_ad_h <= 1).sum(dim="time"), (ref <= 1).sum(dim="time")
+    )
 
 
 @pytest.mark.parametrize("use_dask", [True, False])

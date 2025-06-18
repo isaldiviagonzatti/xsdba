@@ -14,22 +14,21 @@ from collections.abc import Sequence
 import numpy as np
 import xarray as xr
 
+import xsdba
 from xsdba import nbutils as nbu
 from xsdba.base import Grouper, map_groups
-from xsdba.utils import ADDITIVE, apply_correction, ecdf, invert, rank
+from xsdba.utils import ADDITIVE, apply_correction, ecdf, get_correction, invert, rank
 
 
 @map_groups(
     sim_ad=[Grouper.ADD_DIMS, Grouper.DIM],
     dP0=[Grouper.PROP],
     P0_ref=[Grouper.PROP],
+    P0_hist=[Grouper.PROP],
     pth=[Grouper.PROP],
 )
 def _adapt_freq(
-    ds: xr.Dataset,
-    *,
-    dim: Sequence[str],
-    thresh: float = 0,
+    ds: xr.Dataset, *, dim: Sequence[str], thresh: float = 0, kind: str = "+"
 ) -> xr.Dataset:
     r"""
     Adapt frequency of values under thresh of `sim`, in order to match ref.
@@ -64,27 +63,32 @@ def _adapt_freq(
         NaN where frequency adaptation wasn't needed.
       - `dP0` : For each group, the percentage of values that were corrected in sim.
       - `P0_ref` : For each group, the percentage of values under threshold in ref.
+      - `P0_hist` : For each group, either the percentage of values under threshold in sim,
+        or simply repeating the input `ds.P0_hist`.
 
     Notes
     -----
         `ds.ref` is optional: If `dP0`,`P0_ref`,`pth` are given, these values will be used and `ds.ref` is not necessary.
         Either `ds.ref` or the triplet (`dP0`,`P0_ref`,`pth`)  must be given.
     """
-    ref, dP0, P0_ref, pth = (ds.get(k, None) for k in ["ref", "dP0", "P0_ref", "pth"])
-    reuse_dP0 = {dP0 is not None, P0_ref is not None, pth is not None}
+    ref, P0_ref, pth, P0_hist = (
+        ds.get(k, None) for k in ["ref", "P0_ref", "pth", "P0_hist"]
+    )
+    reuse_dP0 = {P0_hist is not None, P0_ref is not None, pth is not None}
     if len(reuse_dP0) != 1:
-        raise ValueError("`dP0`, `P0_ref`, `pth` must all be given, or be `None`.")
+        raise ValueError("`P0_hist`, `P0_ref`, `pth` must all be given, or be `None`.")
     reuse_dP0 = list(reuse_dP0)[0]
     if len({ref is not None, reuse_dP0}) != 2:
         raise ValueError(
-            "Either `ref` or the triplet (`dP0`,`P0_ref`,`pth`) must be None, and not both."
+            "Either `ref` or the triplet (`P0_hist`,`P0_ref`,`pth`) must be None, and not both."
         )
 
     # Compute the probability of finding a value <= thresh
     # This is the "dry-day frequency" in the precipitation case
     P0_sim = ecdf(ds.sim, thresh, dim=dim)
+    P0_hist = P0_sim if P0_hist is None else P0_hist
     P0_ref = ecdf(ref, thresh, dim=dim) if P0_ref is None else P0_ref
-    dP0 = (P0_sim - P0_ref) / P0_sim if dP0 is None else dP0
+    dP0 = (P0_hist - P0_ref) / P0_hist
     if dP0.isnull().all():
         pth = dP0.copy()
         sim_ad = ds.sim.copy()
@@ -92,21 +96,26 @@ def _adapt_freq(
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
         # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed
-        pth = nbu.vecquantiles(ref, P0_sim, dim).where(dP0 > 0) if pth is None else pth
+        pth = nbu.vecquantiles(ref, P0_hist, dim).where(dP0 > 0) if pth is None else pth
 
         # this removes the grouping dims, probably should not be handled like this
         cut_dims = set(P0_ref.dims) - set(ds.sim.dims)
-        dP0, P0_ref, pth = (da[{d: 0 for d in cut_dims}] for da in [dP0, P0_ref, pth])
+        dP0, P0_ref, pth, P0_hist = (
+            da[{d: 0 for d in cut_dims}] for da in [dP0, P0_ref, pth, P0_hist]
+        )
 
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
         sim = ds.sim
         # Get the percentile rank of each value in sim.
+        # sim = xsdba.processing.jitter_under_thresh(sim, thresh = f"{thresh/10} {sim.units}")
         rnk = rank(sim, dim=dim, pct=True)
         # Frequency-adapted sim
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
             sim.where(
-                (rnk < P0_ref) | (rnk > P0_sim),  # Preserve current values
+                (rnk < (P0_ref / P0_hist) * P0_sim)
+                | (rnk > P0_sim)
+                | sim.isnull(),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
                 (pth.broadcast_like(sim) - thresh)
                 * np.random.random_sample(size=sim.shape)
@@ -124,9 +133,16 @@ def _adapt_freq(
     dP0 = ds.sim[{"time": 0}].copy(data=dP0.values)
     pth = ds.sim[{"time": 0}].copy(data=pth.values)
     P0_ref = ds.sim[{"time": 0}].copy(data=P0_ref.values)
+    P0_hist = ds.sim[{"time": 0}].copy(data=P0_hist.values)
 
     return xr.Dataset(
-        data_vars={"pth": pth, "dP0": dP0, "P0_ref": P0_ref, "sim_ad": sim_ad}
+        data_vars={
+            "pth": pth,
+            "dP0": dP0,
+            "P0_ref": P0_ref,
+            "P0_hist": P0_hist,
+            "sim_ad": sim_ad,
+        }
     )
 
 

@@ -62,7 +62,7 @@ def _preprocess_dataset(
         ds = ds.assign({v: out[v] for v in out.data_vars})
     else:
         dummy = xr.full_like(ds["sim"][{"time": 0}], np.nan)
-        ds = ds.assign(dP0=dummy, P0_ref=dummy, pth=dummy)
+        ds = ds.assign(dP0=dummy, P0_ref=dummy, P0_hist=dummy, pth=dummy)
 
     if needs_rename:
         ds = ds.rename({"sim": "hist"})
@@ -76,6 +76,7 @@ def _preprocess_dataset(
     scaling=[Grouper.PROP],
     dP0=[Grouper.PROP],
     P0_ref=[Grouper.PROP],
+    P0_hist=[Grouper.PROP],
     pth=[Grouper.PROP],
 )
 def dqm_train(
@@ -152,6 +153,7 @@ def dqm_train(
             "scaling": scaling,
             "dP0": ds.dP0,
             "P0_ref": ds.P0_ref,
+            "P0_hist": ds.P0_hist,
             "pth": ds.pth,
         }
     )
@@ -162,6 +164,7 @@ def dqm_train(
     hist_q=[Grouper.PROP, "quantiles"],
     dP0=[Grouper.PROP],
     P0_ref=[Grouper.PROP],
+    P0_hist=[Grouper.PROP],
     pth=[Grouper.PROP],
 )
 def eqm_train(
@@ -229,6 +232,7 @@ def eqm_train(
             "hist_q": hist_q,
             "dP0": ds.dP0,
             "P0_ref": ds.P0_ref,
+            "P0_hist": ds.P0_hist,
             "pth": ds.pth,
         }
     )
@@ -651,8 +655,9 @@ def dqm_adjust(
     xr.Dataset
         The adjusted data and the trend.
     """
-    ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
-    ds = ds.drop_vars("dP0", "pth", "P0_ref")
+    if adapt_freq_thresh is not None:
+        ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+        ds = ds.drop_vars(["dP0", "pth", "P0_ref", "P0_hist"])
 
     scaled_sim = u.apply_correction(
         ds.sim,
