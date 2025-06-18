@@ -578,6 +578,9 @@ def to_additive_space(
     This will thus produce `Infinity` and `NaN` values where :math:`X == b_-` or :math:`X == b_+`.
     We recommend using :py:func:`jitter_under_thresh` and :py:func:`jitter_over_thresh` to remove those issues.
 
+    If :math:`X \in [b_-, b_+]`, `clip_to_bounds` can be set to `True`, and boundary values will be slightly changed (with the smallest float32
+    increment) to ensure that :math:`X \in ]b_-, b_+[`.
+
     References
     ----------
     :cite:cts:`alavoine_distinct_2022`.
@@ -599,6 +602,14 @@ def to_additive_space(
 
     # clip bounds
     if clip_to_bounds:
+        if (data < lower_bound).any() or (data > (upper_bound or np.nan)).any():
+            raise ValueError(
+                "The input dataset contains values outside of the range [lower_bound, upper_bound] "
+                "(with upper_bound given by infinity is not specified). Clipping the values to the range "
+                "]lower_bound, upper_bound[ will silence this problem. Check if the bounds are taken appropriately or "
+                "if your input dataset has unphysical values."
+            )
+
         low = np.nextafter(lower_bound, np.inf, dtype=np.float32)
         high = (
             None
