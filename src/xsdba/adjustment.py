@@ -654,7 +654,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             jitter_over_thresh_upper_bnd=jitter_over_thresh_upper_bnd,
         )
         if adapt_freq_thresh is None:
-            ds = ds.drop_vars(["dP0", "P0_ref", "pth"])
+            ds = ds.drop_vars(["dP0", "P0_ref", "P0_hist", "pth"])
 
         ds.af.attrs.update(
             standard_name="Adjustment factors",
