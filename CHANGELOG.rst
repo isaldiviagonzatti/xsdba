@@ -19,6 +19,7 @@ Changes
 * ``xsdba.units.convert_units_to`` now wraps a private function ``_convert_units_to``. (:pull:`145`).
 * ``xsdba.jitter_over_thresh`` is available directly in training methods by passing the `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd`  arguments. (:pull:`110`).
 * Throw an error if `group=Grouper('5D',window)` is used with a biasadjust method other than `MBCn`.
+* ``xsdba.processing.to_additive_space`` accepts `clip_next_to_bounds`, which avoids infinities by ensuring `lower_bound < data < upper_bound`. (:issue:`164`, :pull:`165`).
 
 Fixes
 ^^^^^
@@ -51,6 +52,7 @@ Fixes
 * `xsdba` now uses directly `operator` instead of using `xarray`'s derived `get_op` function. A refactoring in `xarray` had changed the position of `get_op` which caused a bug. (:pull:`120`).
 * For more than 1000 quantiles, `fastnanquantile` is not used anymore, as it would throw an error. (:issue:`119`, :pull:`123`).
 * `Grouper` now throws an error if `group='time'` is used  with `window>1`. (:issue:`104`, :pull:`122`).
+* Slightly reduce "maximum" in `jitter` to fix dtype conversion issue. (:issue:`124`, :pull:`125`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

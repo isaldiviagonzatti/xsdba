@@ -65,6 +65,34 @@ def test_jitter_over_thresh():
     assert out.units == "m"
 
 
+@pytest.mark.parametrize("test_val", [1e-6, 1, 100, 1e6])
+@pytest.mark.parametrize("dtype, delta", [("f8", 1e-8), ("f4", 1e-6), ("f16", 1e-8)])
+def test_jitter_other_dtypes(dtype, delta, test_val):
+    # below, narrow intervals are meant to increase likely hood of rounding issues
+    da = xr.DataArray(test_val + np.zeros(1000, dtype=dtype), attrs={"units": "%"})
+    out_high = jitter(
+        da, upper=f"{test_val * (1 - delta):.20f} %", maximum=f"{test_val:.20f} %"
+    )
+    out_low = jitter(
+        da, lower=f"{test_val * (1 + delta):.20f} %", minimum=f"{test_val:.20f} %"
+    )
+    assert (out_high < test_val).all()
+    assert (out_low > test_val).all()
+
+
+@pytest.mark.parametrize("test", ["lower", "upper"])
+@pytest.mark.parametrize("dtype, delta", [("f8", 1e-8), ("f4", 1e-6), ("f16", 1e-8)])
+def test_jitter_log(dtype, delta, test):
+    # below, narrow intervals are meant to increase likely hood of rounding issues
+    test_val = delta / 2 if test == "lower" else 1 - delta / 2
+    da = xr.DataArray(test_val + np.zeros(1000, dtype=dtype), attrs={"units": "%"})
+    if test == "lower":
+        out = jitter(da, lower=f"{delta:.20f} %", minimum=f"{test_val:.20f} %")
+    else:
+        out = jitter(da, upper=f"{1 - delta:.20f} %", maximum=f"{test_val:.20f} %")
+    assert (np.isfinite(np.log(out / (1 - out)))).all()
+
+
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_adapt_freq(use_dask, random):
     time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
@@ -249,6 +277,34 @@ def test_to_additive(timeseries):
     )
     assert hurslogit2.attrs["xsdba_transform_lower"] == 200.0
     assert hurslogit2.attrs["xsdba_transform_upper"] == 600.0
+
+
+def test_to_additive_clipping(timeseries):
+    # log
+    pr = timeseries(np.array([0]), units="kg m^-2 s^-1")
+    prlog = to_additive_space(
+        pr, lower_bound="0 kg m^-2 s^-1", trans="log", clip_next_to_bounds=True
+    )
+    assert np.isfinite(prlog).all()
+
+    with xr.set_options(keep_attrs=True):
+        pr1 = pr + 1
+    lower_bound = "1 kg m^-2 s^-1"
+    prlog2 = to_additive_space(
+        pr1, trans="log", lower_bound=lower_bound, clip_next_to_bounds=True
+    )
+    assert np.isfinite(prlog2).all()
+
+    # logit
+    hurs = timeseries(np.array([0, 100]), units="%")
+    hurslogit = to_additive_space(
+        hurs,
+        lower_bound="0 %",
+        trans="logit",
+        upper_bound="100 %",
+        clip_next_to_bounds=True,
+    )
+    assert np.isfinite(hurslogit).all()
 
 
 def test_from_additive(timeseries):

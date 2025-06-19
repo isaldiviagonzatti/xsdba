@@ -226,7 +226,7 @@ def jitter(
     if lower is not None:
         jitter_lower = np.array(lower).astype(float)
         jitter_min = np.array(minimum if minimum is not None else 0).astype(float)
-        jitter_min = jitter_min + np.finfo(x.dtype).eps
+        jitter_min = np.nextafter(jitter_min.astype(x.dtype), np.inf, dtype=x.dtype)
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
                 low=dsk.from_array(jitter_min),
@@ -244,9 +244,18 @@ def jitter(
             raise ValueError("If 'upper' is given, so must 'maximum'.")
         jitter_upper = np.array(upper).astype(float)
         jitter_max = np.array(maximum).astype(float)
+        # for float64 (dtype.itemsize==8), `np.random.uniform`
+        # already excludes the upper limit
+        if x.dtype.itemsize < 8:
+            jitter_max = np.nextafter(
+                jitter_max.astype(x.dtype), -np.inf, dtype=x.dtype
+            )
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
-                low=jitter_upper, high=jitter_max, size=x.shape, chunks=x.chunks
+                low=dsk.from_array(jitter_upper),
+                high=dsk.from_array(jitter_max),
+                size=x.shape,
+                chunks=x.chunks,
             )
         else:
             jitter_dist = np.random.uniform(
@@ -519,6 +528,7 @@ def to_additive_space(
     lower_bound: str,
     upper_bound: str | None = None,
     trans: str = "log",
+    clip_next_to_bounds: bool = False,
 ):
     r"""
     Transform a non-additive variable into an additive space by the means of a log or logit transformation.
@@ -538,6 +548,9 @@ def to_additive_space(
         The data should only have values strictly smaller than this bound.
     trans : {'log', 'logit'}
         The transformation to use. See notes.
+    clip_next_to_bounds : bool
+        If `True`, values are clipped to ensure `data > lower_bound`  and `data < upper_bound` (if specified).
+        Defaults to `False`. `data` must be in the range [lower_bound, upper_bound], else an error is thrown.
 
     See Also
     --------
@@ -574,6 +587,9 @@ def to_additive_space(
     This will thus produce `Infinity` and `NaN` values where :math:`X == b_-` or :math:`X == b_+`.
     We recommend using :py:func:`jitter_under_thresh` and :py:func:`jitter_over_thresh` to remove those issues.
 
+    If :math:`X \in [b_-, b_+]`, `clip_next_to_bounds` can be set to `True`, and boundary values will be slightly changed (with the smallest float32
+    increment) to ensure that :math:`X \in ]b_-, b_+[`.
+
     References
     ----------
     :cite:cts:`alavoine_distinct_2022`.
@@ -592,6 +608,24 @@ def to_additive_space(
             out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
+
+    # clip bounds
+    if clip_next_to_bounds:
+        if (data < lower_bound).any() or (data > (upper_bound or np.nan)).any():
+            raise ValueError(
+                "The input dataset contains values outside of the range [lower_bound, upper_bound] "
+                "(with upper_bound given by infinity if it is not specified). Clipping the values to the range "
+                "]lower_bound, upper_bound[ is not allowed in this case. Check if the bounds are taken appropriately or "
+                "if your input dataset has unphysical values."
+            )
+
+        low = np.nextafter(lower_bound, np.inf, dtype=np.float32)
+        high = (
+            None
+            if upper_bound is None
+            else np.nextafter(upper_bound, -np.inf, dtype=np.float32)
+        )
+        out = out.clip(low, high)
 
     # Attributes to remember all this.
     out = out.assign_attrs(xsdba_transform=trans)
