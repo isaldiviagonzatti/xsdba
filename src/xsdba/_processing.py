@@ -41,8 +41,8 @@ def _adapt_freq(
         Dataset variables:
             sim : simulated data
             ref (optional) : training target.
-            dP0 (optional): For each group, the percentage of values that were corrected in sim.
             P0_ref (optional) : Proportion of zeros in the reference dataset.
+            P0_hist (optional) : Proportion of zeros in the historical dataset.
             pth (optional) : The smallest value of sim that was not frequency-adjusted in the training.
     dim : str, or sequence of strings
         Dimension name(s).
@@ -71,16 +71,16 @@ def _adapt_freq(
         `ds.ref` is optional: If `dP0`,`P0_ref`,`pth` are given, these values will be used and `ds.ref` is not necessary.
         Either `ds.ref` or the triplet (`dP0`,`P0_ref`,`pth`)  must be given.
     """
-    ref, P0_ref, pth, P0_hist = (
-        ds.get(k, None) for k in ["ref", "P0_ref", "pth", "P0_hist"]
+    ref, P0_ref, P0_hist, pth = (
+        ds.get(k, None) for k in ["ref", "P0_ref", "P0_hist", "pth"]
     )
-    reuse_dP0 = {P0_hist is not None, P0_ref is not None, pth is not None}
+    reuse_dP0 = {P0_ref is not None, P0_hist is not None, pth is not None}
     if len(reuse_dP0) != 1:
-        raise ValueError("`P0_hist`, `P0_ref`, `pth` must all be given, or be `None`.")
+        raise ValueError("`P0_ref`, `P0_hist`, `pth` must all be given, or be `None`.")
     reuse_dP0 = list(reuse_dP0)[0]
     if len({ref is not None, reuse_dP0}) != 2:
         raise ValueError(
-            "Either `ref` or the triplet (`P0_hist`,`P0_ref`,`pth`) must be None, and not both."
+            "Either `ref` or the triplet (`P0_ref`,`P0_hist`,`pth`) must be None, and not both."
         )
 
     # Compute the probability of finding a value <= thresh
@@ -100,8 +100,8 @@ def _adapt_freq(
 
         # this removes the grouping dims, probably should not be handled like this
         cut_dims = set(P0_ref.dims) - set(ds.sim.dims)
-        dP0, P0_ref, pth, P0_hist = (
-            da[{d: 0 for d in cut_dims}] for da in [dP0, P0_ref, pth, P0_hist]
+        dP0, P0_ref, P0_hist, pth = (
+            da[{d: 0 for d in cut_dims}] for da in [dP0, P0_ref, P0_hist, pth]
         )
 
         # Probabilities and quantiles computed within all dims, but correction along the first one only.

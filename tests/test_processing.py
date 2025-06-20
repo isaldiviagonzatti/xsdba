@@ -117,36 +117,36 @@ def test_adapt_freq(use_dask, random):
 
 
 def test_adapt_freq_adjust(gosset):
+    past = {"time": slice("1950", "1969")}
+    future = {"time": slice("1970", "1989")}
+    all_time = {"time": slice("1950", "1989")}
     ref = (
-        xr.open_dataset(gosset.fetch("sdba/ahccd_1950-2013.nc"))
-        .sel(time=slice("1950", "1969"))
-        .pr.fillna(0)
+        xr.open_dataset(gosset.fetch("sdba/ahccd_1950-2013.nc")).loc[past].pr.fillna(0)
     )
     sim = (
         xr.open_dataset(gosset.fetch("sdba/CanESM2_1950-2100.nc"))
-        .sel(time=slice("1950", "1989"))
+        .loc[all_time]
         .pr.fillna(0)
     )
     sim = xclim.core.units.convert_units_to(sim, ref)  # mm/d
-
     sim.loc[{"time": slice("1950", "1965")}] = 0
     sim.loc[{"time": slice("1970", "1980")}] = 0
-    sim = jitter_under_thresh(sim, "0.001 mm/d")
+    sim = jitter_under_thresh(sim, "1 mm/d")
+    hist = sim.loc[past]
+    # this is just to make sure the example works, some adaptation is needed
+    assert ((hist <= 1).sum(dim="time") > (ref <= 1).sum(dim="time")).all()
 
-    hist = sim.sel(time=slice("1950", "1969"))
     outh = _adapt_freq.func(xr.Dataset(dict(ref=ref, sim=hist)), dim="time", thresh=1)
     hist_ad = outh.sim_ad
     outs = _adapt_freq.func(
-        xr.Dataset(dict(sim=sim, dP0=outh.dP0, pth=outh.pth, P0_ref=outh.P0_ref)),
+        xr.merge([sim.to_dataset(name="sim"), outh]),
         dim="time",
         thresh=1,
     )
     sim_ad = outs.sim_ad
-    sim_ad_h = sim_ad.sel(time=slice("1950", "1969"))
-    # np.testing.assert_allclose((hist_ad<=1).sum(dim="time"), (ref<=1).sum(dim="time"))
-    np.testing.assert_allclose(
-        (sim_ad_h <= 1).sum(dim="time"), (ref <= 1).sum(dim="time")
-    )
+    sim_f = sim.loc[future]
+    sim_ad_f = sim_ad.loc[future]
+    assert ((sim_ad_f <= 1).sum(dim="time") < (sim_ad <= 1).sum(dim="time")).all()
 
 
 @pytest.mark.parametrize("use_dask", [True, False])

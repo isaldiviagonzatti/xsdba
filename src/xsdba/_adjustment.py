@@ -39,7 +39,7 @@ def _preprocess_dataset(
     jitter_over_thresh_upper_bnd: str | None = None,
 ):
     # uniformize the notation, change back at the end
-    if needs_rename := ("hist" in ds):
+    if rename_hist := ("hist" in ds):
         ds = ds.rename({"hist": "sim"})
 
     if jitter_under_thresh_value:
@@ -64,7 +64,7 @@ def _preprocess_dataset(
         dummy = xr.full_like(ds["sim"][{"time": 0}], np.nan)
         ds = ds.assign(dP0=dummy, P0_ref=dummy, P0_hist=dummy, pth=dummy)
 
-    if needs_rename:
+    if rename_hist:
         ds = ds.rename({"sim": "hist"})
 
     return ds
