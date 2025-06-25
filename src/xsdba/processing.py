@@ -627,7 +627,6 @@ def to_additive_space(
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
 
-
     # Attributes to remember all this.
     out = out.assign_attrs(xsdba_transform=trans)
     out = out.assign_attrs(xsdba_transform_lower=lower_bound_array)
