@@ -466,9 +466,10 @@ class Grouper(Parametrizable):
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in outvar.attrs:
-                    out[name] = self.group(outvar, main_only=True).first(
-                        skipna=False, keep_attrs=True
-                    )
+                    if self.dim in outvar.dims:
+                        out[name] = self.group(outvar, main_only=True).first(
+                            skipna=False, keep_attrs=True
+                        )
                     del out[name].attrs["_group_apply_reshape"]
 
         # Save input parameters as attributes of output DataArray.

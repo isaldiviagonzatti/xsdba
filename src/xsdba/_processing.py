@@ -99,10 +99,6 @@ def _adapt_freq(
         pth = nbu.vecquantiles(ref, P0_hist, dim).where(dP0 > 0) if pth is None else pth
 
         # this removes the grouping dims, probably should not be handled like this
-        cut_dims = set(P0_ref.dims) - set(ds.sim.dims)
-        dP0, P0_ref, P0_hist, pth = (
-            da[{d: 0 for d in cut_dims}] for da in [dP0, P0_ref, P0_hist, pth]
-        )
 
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
         sim = ds.sim
@@ -128,12 +124,8 @@ def _adapt_freq(
     # the whole output is broadcasted back to the original dims.
     pth.attrs["_group_apply_reshape"] = True
     dP0.attrs["_group_apply_reshape"] = True
-
-    # so that things work in map_groups
-    dP0 = ds.sim[{"time": 0}].copy(data=dP0.values)
-    pth = ds.sim[{"time": 0}].copy(data=pth.values)
-    P0_ref = ds.sim[{"time": 0}].copy(data=P0_ref.values)
-    P0_hist = ds.sim[{"time": 0}].copy(data=P0_hist.values)
+    P0_ref.attrs["_group_apply_reshape"] = True
+    P0_hist.attrs["_group_apply_reshape"] = True
 
     return xr.Dataset(
         data_vars={
