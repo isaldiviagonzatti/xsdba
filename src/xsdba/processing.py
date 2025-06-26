@@ -226,7 +226,7 @@ def jitter(
     if lower is not None:
         jitter_lower = np.array(lower).astype(float)
         jitter_min = np.array(minimum if minimum is not None else 0).astype(float)
-        jitter_min = jitter_min + np.finfo(x.dtype).eps
+        jitter_min = np.nextafter(jitter_min.astype(x.dtype), np.inf, dtype=x.dtype)
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
                 low=dsk.from_array(jitter_min),
@@ -244,9 +244,18 @@ def jitter(
             raise ValueError("If 'upper' is given, so must 'maximum'.")
         jitter_upper = np.array(upper).astype(float)
         jitter_max = np.array(maximum).astype(float)
+        # for float64 (dtype.itemsize==8), `np.random.uniform`
+        # already excludes the upper limit
+        if x.dtype.itemsize < 8:
+            jitter_max = np.nextafter(
+                jitter_max.astype(x.dtype), -np.inf, dtype=x.dtype
+            )
         if uses_dask(x):
             jitter_dist = dsk.random.uniform(
-                low=jitter_upper, high=jitter_max, size=x.shape, chunks=x.chunks
+                low=dsk.from_array(jitter_upper),
+                high=dsk.from_array(jitter_max),
+                size=x.shape,
+                chunks=x.chunks,
             )
         else:
             jitter_dist = np.random.uniform(
@@ -589,17 +598,6 @@ def to_additive_space(
     if upper_bound is not None:
         upper_bound_array = np.array(upper_bound).astype(float)
 
-    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
-        if trans == "log":
-            out = cast(xr.DataArray, np.log(data - lower_bound_array))
-        elif trans == "logit" and upper_bound is not None:
-            data_prime = (data - lower_bound_array) / (
-                upper_bound_array - lower_bound_array  # pylint: disable=E0606
-            )
-            out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
-        else:
-            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
-
     # clip bounds
     if clip_next_to_bounds:
         if (data < lower_bound).any() or (data > (upper_bound or np.nan)).any():
@@ -616,7 +614,18 @@ def to_additive_space(
             if upper_bound is None
             else np.nextafter(upper_bound, -np.inf, dtype=np.float32)
         )
-        out = out.clip(low, high)
+        data = data.clip(low, high)
+
+    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
+        if trans == "log":
+            out = cast(xr.DataArray, np.log(data - lower_bound_array))
+        elif trans == "logit" and upper_bound is not None:
+            data_prime = (data - lower_bound_array) / (
+                upper_bound_array - lower_bound_array  # pylint: disable=E0606
+            )
+            out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
+        else:
+            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
 
     # Attributes to remember all this.
     out = out.assign_attrs(xsdba_transform=trans)

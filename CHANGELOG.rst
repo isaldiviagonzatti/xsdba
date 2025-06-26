@@ -25,6 +25,7 @@ Fixes
 ^^^^^
 * Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
 * Fix ``xsdba.processing.from_additive_space`` to handles units correctly by using `convert_units_to` instead of `harmonize_units`. (:pull:`146`).
+* Fix the order of `clip_next_to_bounds` in ``xsdba.processing.to_additive_space``. (:pull:`169`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -52,6 +53,7 @@ Fixes
 * `xsdba` now uses directly `operator` instead of using `xarray`'s derived `get_op` function. A refactoring in `xarray` had changed the position of `get_op` which caused a bug. (:pull:`120`).
 * For more than 1000 quantiles, `fastnanquantile` is not used anymore, as it would throw an error. (:issue:`119`, :pull:`123`).
 * `Grouper` now throws an error if `group='time'` is used  with `window>1`. (:issue:`104`, :pull:`122`).
+* Slightly reduce "maximum" in `jitter` to fix dtype conversion issue. (:issue:`124`, :pull:`125`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
