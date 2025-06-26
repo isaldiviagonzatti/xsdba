@@ -542,8 +542,8 @@ class EmpiricalQuantileMapping(TrainAdjust):
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
-        if adapt_freq_thresh is None:
-            ds = ds.drop_vars(["dP0", "P0_ref", "P0_hist", "pth"])
+        # if adapt_freq_thresh is None:
+        #     ds = ds.drop_vars(["dP0", "P0_ref", "P0_hist", "pth"])
 
         return ds, {
             "group": group,

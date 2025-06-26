@@ -33,11 +33,13 @@ from .utils import _fitfunc_1d
 
 def _preprocess_dataset(
     ds: xr.Dataset,
+    dim: str | list,
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
     jitter_over_thresh_value: str | None = None,
     jitter_over_thresh_upper_bnd: str | None = None,
 ):
+    dim = dim if isinstance(dim, list) else [dim]
     # uniformize the notation, change back at the end
     if rename_hist := ("hist" in ds):
         ds = ds.rename({"hist": "sim"})
@@ -56,12 +58,12 @@ def _preprocess_dataset(
         )
 
     if adapt_freq_thresh:
-        dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
+        # dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
         thresh = convert_units_to(adapt_freq_thresh, ds.sim)
         out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
         ds = ds.assign({v: out[v] for v in out.data_vars})
     else:
-        dummy = xr.full_like(ds["sim"][{"time": 0}], np.nan)
+        dummy = xr.full_like(ds["sim"][{d: 0 for d in dim}], np.nan)
         ds = ds.assign(dP0=dummy, P0_ref=dummy, P0_hist=dummy, pth=dummy)
 
     if rename_hist:
@@ -130,6 +132,7 @@ def dqm_train(
     """
     ds = _preprocess_dataset(
         ds,
+        dim,
         adapt_freq_thresh,
         jitter_under_thresh_value,
         jitter_over_thresh_value,
@@ -215,6 +218,7 @@ def eqm_train(
     """
     ds = _preprocess_dataset(
         ds,
+        dim,
         adapt_freq_thresh,
         jitter_under_thresh_value,
         jitter_over_thresh_value,
@@ -595,7 +599,7 @@ def qm_adjust(
     xr.Dataset
         The adjusted data.
     """
-    ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+    ds = _preprocess_dataset(ds, dim=group.dim, adapt_freq_thresh=adapt_freq_thresh)
 
     af = u.interp_on_quantiles(
         ds.sim,
@@ -656,7 +660,7 @@ def dqm_adjust(
         The adjusted data and the trend.
     """
     if adapt_freq_thresh is not None:
-        ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+        ds = _preprocess_dataset(ds, dim=group.dim, adapt_freq_thresh=adapt_freq_thresh)
         ds = ds.drop_vars(["dP0", "pth", "P0_ref", "P0_hist"])
 
     scaled_sim = u.apply_correction(
@@ -729,7 +733,9 @@ def qdm_adjust(
     xr.Dataset
         The adjusted data.
     """
-    ds = _preprocess_dataset(ds, adapt_freq_thresh=adapt_freq_thresh)
+    if adapt_freq_thresh is not None:
+        ds = _preprocess_dataset(ds, dim=group.dim, adapt_freq_thresh=adapt_freq_thresh)
+        ds = ds.drop_vars(["dP0", "pth", "P0_ref", "P0_hist"])
 
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
     af = u.interp_on_quantiles(
@@ -1511,11 +1517,11 @@ def dotc_adjust(
                 ds0 = xr.Dataset(
                     {"ref": ref.sel({pts_dim: var}), "sim": hist.sel({pts_dim: var})}
                 )
-                ds0 = _preprocess_dataset(ds0, adapt_freq_thresh=thresh)
+                ds0 = _preprocess_dataset(ds0, dim=dim, adapt_freq_thresh=thresh)
                 hist.loc[{pts_dim: var}] = ds0.sim
                 ds0["sim"] = sim.loc[{pts_dim: var}]
                 sim.loc[{pts_dim: var}] = _preprocess_dataset(
-                    ds0, adapt_freq_thresh=thresh
+                    ds0, dim=dim, adapt_freq_thresh=thresh
                 ).sim
 
     # Drop data added by map_blocks and prepare for apply_ufunc
