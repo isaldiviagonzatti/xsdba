@@ -80,7 +80,7 @@ def _adapt_freq(
     reuse_dP0 = list(reuse_dP0)[0]
     if len({ref is not None, reuse_dP0}) != 2:
         raise ValueError(
-            "Either `ref` or the triplet (`P0_ref`,`P0_hist`,`pth`) must be None, and not both."
+            "Either `ref` or the triplet (`P0_ref`,`P0_hist`,`pth`) must be None."
         )
     dim = [dim] if isinstance(dim, str) else dim
     # map_groups quirk: datasets are broadcasted and must be sliced

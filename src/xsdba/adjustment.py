@@ -741,7 +741,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
         out = qdm_adjust(
-            xr.Dataset({"sim": sim, "af": self.ds.af, "hist_q": self.ds.hist_q}),
+            self.ds.assign(sim=sim),
             group=self.group,
             interp=interp,
             extrapolation=extrapolation,
