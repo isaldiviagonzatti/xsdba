@@ -647,12 +647,6 @@ def map_blocks(  # noqa: C901
             for dim in red_dims:
                 reduced_dims.extend(placeholders.get(dim, [dim]))
 
-            for dim in new_dims:
-                if dim in ds.dims and dim not in reduced_dims:
-                    raise ValueError(
-                        f"Dimension {dim} is meant to be added by the "
-                        "computation but it is already on one of the inputs."
-                    )
             if uses_dask(ds):
                 # Use dask if any of the input is dask-backed.
                 chunks = (

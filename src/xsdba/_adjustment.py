@@ -31,6 +31,24 @@ from .units import convert_units_to
 from .utils import _fitfunc_1d
 
 
+def _adapt_freq_preprocess(
+    ds, adapt_freq_thresh, group: Grouper | None, dim: str | None
+):
+    if adapt_freq_thresh is None:
+        return ds
+    if (group is None) ^ (dim is None) is False:
+        raise ValueError("Either `group` or `dim` must be None.")
+    if group == "time":
+        group, dim = None, group
+    thresh = convert_units_to(adapt_freq_thresh, ds.sim)
+    if group:
+        out = _adapt_freq(ds.isel(quantiles=0), group=group)
+    else:
+        out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
+    ds = ds.assign({v: out[v] for v in out.data_vars})
+    return ds
+
+
 def _preprocess_dataset(
     ds: xr.Dataset,
     dim: str | list,
@@ -58,10 +76,8 @@ def _preprocess_dataset(
         )
 
     if adapt_freq_thresh:
-        # dim = ["time"] + ["window"] * ("window" in ds.sim.dims)
-        thresh = convert_units_to(adapt_freq_thresh, ds.sim)
-        out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
-        ds = ds.assign({v: out[v] for v in out.data_vars})
+        ds = _adapt_freq_preprocess(ds, adapt_freq_thresh, None, dim)
+
     else:
         dummy = xr.full_like(ds["sim"][{d: 0 for d in dim}], np.nan)
         ds = ds.assign(dP0=dummy, P0_ref=dummy, P0_hist=dummy, pth=dummy)
@@ -599,7 +615,9 @@ def qm_adjust(
     xr.Dataset
         The adjusted data.
     """
-    ds = _preprocess_dataset(ds, dim=group.dim, adapt_freq_thresh=adapt_freq_thresh)
+    ds["sim"] = _adapt_freq_preprocess(
+        ds, adapt_freq_thresh, group=Grouper(group.name), dim=None
+    ).sim
 
     af = u.interp_on_quantiles(
         ds.sim,
@@ -659,9 +677,9 @@ def dqm_adjust(
     xr.Dataset
         The adjusted data and the trend.
     """
-    if adapt_freq_thresh is not None:
-        ds = _preprocess_dataset(ds, dim=group.dim, adapt_freq_thresh=adapt_freq_thresh)
-        ds = ds.drop_vars(["dP0", "pth", "P0_ref", "P0_hist"])
+    ds["sim"] = _adapt_freq_preprocess(
+        ds, adapt_freq_thresh, group=Grouper(group.name), dim=None
+    ).sim
 
     scaled_sim = u.apply_correction(
         ds.sim,
@@ -733,9 +751,9 @@ def qdm_adjust(
     xr.Dataset
         The adjusted data.
     """
-    if adapt_freq_thresh is not None:
-        ds = _preprocess_dataset(ds, dim=group.dim, adapt_freq_thresh=adapt_freq_thresh)
-        ds = ds.drop_vars(["dP0", "pth", "P0_ref", "P0_hist"])
+    ds["sim"] = _adapt_freq_preprocess(
+        ds, adapt_freq_thresh, group=Grouper(group.name), dim=None
+    ).sim
 
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
     af = u.interp_on_quantiles(

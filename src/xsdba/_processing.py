@@ -82,6 +82,12 @@ def _adapt_freq(
         raise ValueError(
             "Either `ref` or the triplet (`P0_ref`,`P0_hist`,`pth`) must be None, and not both."
         )
+    dim = [dim] if isinstance(dim, str) else dim
+    # map_groups quirk: datasets are broadcasted and must be sliced
+    P0_ref, P0_hist, pth = (
+        da if da is None else da[{d: 0 for d in set(dim).intersection(set(da.dims))}]
+        for da in [P0_ref, P0_hist, pth]
+    )
 
     # Compute the probability of finding a value <= thresh
     # This is the "dry-day frequency" in the precipitation case
