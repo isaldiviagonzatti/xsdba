@@ -598,17 +598,6 @@ def to_additive_space(
     if upper_bound is not None:
         upper_bound_array = np.array(upper_bound).astype(float)
 
-    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
-        if trans == "log":
-            out = cast(xr.DataArray, np.log(data - lower_bound_array))
-        elif trans == "logit" and upper_bound is not None:
-            data_prime = (data - lower_bound_array) / (
-                upper_bound_array - lower_bound_array  # pylint: disable=E0606
-            )
-            out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
-        else:
-            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
-
     # clip bounds
     if clip_next_to_bounds:
         if (data < lower_bound).any() or (data > (upper_bound or np.nan)).any():
@@ -625,7 +614,18 @@ def to_additive_space(
             if upper_bound is None
             else np.nextafter(upper_bound, -np.inf, dtype=np.float32)
         )
-        out = out.clip(low, high)
+        data = data.clip(low, high)
+
+    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
+        if trans == "log":
+            out = cast(xr.DataArray, np.log(data - lower_bound_array))
+        elif trans == "logit" and upper_bound is not None:
+            data_prime = (data - lower_bound_array) / (
+                upper_bound_array - lower_bound_array  # pylint: disable=E0606
+            )
+            out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
+        else:
+            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
 
     # Attributes to remember all this.
     out = out.assign_attrs(xsdba_transform=trans)
