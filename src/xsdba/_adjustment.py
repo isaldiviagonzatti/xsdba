@@ -1535,9 +1535,12 @@ def dotc_adjust(
                 ds0 = xr.Dataset(
                     {"ref": ref.sel({pts_dim: var}), "sim": hist.sel({pts_dim: var})}
                 )
+                # add the `dP0, P0_ref, P0_hist, pth` datasets
                 ds0 = _preprocess_dataset(ds0, dim=dim, adapt_freq_thresh=thresh)
                 hist.loc[{pts_dim: var}] = ds0.sim
                 ds0["sim"] = sim.loc[{pts_dim: var}]
+                # remove the `ref` dataset since we already have `P0_ref` and other datasets
+                ds0 = ds0.drop("ref")
                 sim.loc[{pts_dim: var}] = _preprocess_dataset(
                     ds0, dim=dim, adapt_freq_thresh=thresh
                 ).sim
