@@ -46,6 +46,8 @@ def _adapt_freq_preprocess(
     else:
         out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
     ds = ds.assign({v: out[v] for v in out.data_vars})
+    # `P0_ref` and `P0_hist` give enough information
+    ds = ds.drop("dP0")
     return ds
 
 
@@ -80,7 +82,7 @@ def _preprocess_dataset(
 
     else:
         dummy = xr.full_like(ds["sim"][{d: 0 for d in dim}], np.nan)
-        ds = ds.assign(dP0=dummy, P0_ref=dummy, P0_hist=dummy, pth=dummy)
+        ds = ds.assign(P0_ref=dummy, P0_hist=dummy, pth=dummy)
 
     if rename_hist:
         ds = ds.rename({"sim": "hist"})
@@ -92,7 +94,6 @@ def _preprocess_dataset(
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
-    dP0=[Grouper.PROP],
     P0_ref=[Grouper.PROP],
     P0_hist=[Grouper.PROP],
     pth=[Grouper.PROP],
@@ -170,7 +171,6 @@ def dqm_train(
             "af": af,
             "hist_q": hist_q,
             "scaling": scaling,
-            "dP0": ds.dP0,
             "P0_ref": ds.P0_ref,
             "P0_hist": ds.P0_hist,
             "pth": ds.pth,
@@ -181,7 +181,6 @@ def dqm_train(
 @map_groups(
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
-    dP0=[Grouper.PROP],
     P0_ref=[Grouper.PROP],
     P0_hist=[Grouper.PROP],
     pth=[Grouper.PROP],
@@ -250,7 +249,6 @@ def eqm_train(
         data_vars={
             "af": af,
             "hist_q": hist_q,
-            "dP0": ds.dP0,
             "P0_ref": ds.P0_ref,
             "P0_hist": ds.P0_hist,
             "pth": ds.pth,
@@ -597,7 +595,6 @@ def qm_adjust(
             af : Adjustment factors
             hist_q : Quantiles over the training data
             sim : Data to adjust.
-            dP0 (optional) : Proportion of exceeding zeroes from training data
             P0_ref (optional) : Proportion of zeroes in the reference
             P0_hist (optional) : Proportion of zeroes in the historical period of the simulation
             pth (optional) : The smallest value of `hist` that was not frequency-adjusted in the training.
@@ -658,7 +655,6 @@ def dqm_adjust(
             af : Adjustment factors
             hist_q : Quantiles over the training data
             sim : Data to adjust
-            dP0 (optional) : Proportion of exceeding zeroes from training data
             P0_ref (optional) : Proportion of zeroes in the reference
             P0_hist (optional) : Proportion of zeroes in the historical period of the simulation
             pth (optional) : The smallest value of `hist` that was not frequency-adjusted in the training.

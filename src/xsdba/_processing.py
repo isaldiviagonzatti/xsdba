@@ -61,24 +61,23 @@ def _adapt_freq(
       - `pth` : For each group, the smallest value of sim that was not frequency-adjusted.
         All values smaller were either left as zero values or given a random value between thresh and pth.
         NaN where frequency adaptation wasn't needed.
-      - `dP0` : For each group, the percentage of values that were corrected in sim.
       - `P0_ref` : For each group, the percentage of values under threshold in ref.
       - `P0_hist` : For each group, either the percentage of values under threshold in sim,
         or simply repeating the input `ds.P0_hist`.
 
     Notes
     -----
-        `ds.ref` is optional: If `dP0`,`P0_ref`,`pth` are given, these values will be used and `ds.ref` is not necessary.
-        Either `ds.ref` or the triplet (`dP0`,`P0_ref`,`pth`)  must be given.
+        `ds.ref` is optional: If `P0_ref`, `P0_hist`,`pth` are given, these values will be used and `ds.ref` is not necessary.
+        Either `ds.ref` or the triplet (`P0_ref`, `P0_hist`,`pth`)  must be given.
     """
     ref, P0_ref, P0_hist, pth = (
         ds.get(k, None) for k in ["ref", "P0_ref", "P0_hist", "pth"]
     )
-    reuse_dP0 = {P0_ref is not None, P0_hist is not None, pth is not None}
-    if len(reuse_dP0) != 1:
+    reuse_adapt_output = {P0_ref is not None, P0_hist is not None, pth is not None}
+    if len(reuse_adapt_output) != 1:
         raise ValueError("`P0_ref`, `P0_hist`, `pth` must all be given, or be `None`.")
-    reuse_dP0 = list(reuse_dP0)[0]
-    if len({ref is not None, reuse_dP0}) != 2:
+    reuse_adapt_output = list(reuse_adapt_output)[0]
+    if len({ref is not None, reuse_adapt_output}) != 2:
         raise ValueError(
             "Either `ref` or the triplet (`P0_ref`,`P0_hist`,`pth`) must be None."
         )
@@ -103,8 +102,6 @@ def _adapt_freq(
         # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed
         pth = nbu.vecquantiles(ref, P0_hist, dim).where(dP0 > 0) if pth is None else pth
-
-        # this removes the grouping dims, probably should not be handled like this
 
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
         sim = ds.sim
