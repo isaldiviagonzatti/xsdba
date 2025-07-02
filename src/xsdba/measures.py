@@ -328,7 +328,7 @@ def _mae(
     """
 
     def _mae_internal(_sim: xr.DataArray, _ref: xr.DataArray) -> xr.DataArray:
-        _f: xr.DataArray = np.mean(np.abs(_sim - _ref), axis=-1)
+        _f: xr.DataArray = np.nanmean(np.abs(_sim - _ref), axis=-1)
         return _f
 
     out = xr.apply_ufunc(
