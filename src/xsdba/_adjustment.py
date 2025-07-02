@@ -596,8 +596,11 @@ def qm_adjust(
         Dataset variables:
             af : Adjustment factors
             hist_q : Quantiles over the training data
-            dP0 : Proportion of zeroes (may be a dummy)
             sim : Data to adjust.
+            dP0 (optional) : Proportion of exceeding zeroes from training data
+            P0_ref (optional) : Proportion of zeroes in the reference
+            P0_hist (optional) : Proportion of zeroes in the historical period of the simulation
+            pth (optional) : The smallest value of `hist` that was not frequency-adjusted in the training.
     group : Grouper
         The grouper object.
     interp : str
@@ -657,6 +660,7 @@ def dqm_adjust(
             sim : Data to adjust
             dP0 (optional) : Proportion of exceeding zeroes from training data
             P0_ref (optional) : Proportion of zeroes in the reference
+            P0_hist (optional) : Proportion of zeroes in the historical period of the simulation
             pth (optional) : The smallest value of `hist` that was not frequency-adjusted in the training.
     group : Grouper
         The grouper object.
