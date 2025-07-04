@@ -45,7 +45,7 @@ def _adapt_freq_preprocess(
         out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
     ds = ds.assign({v: out[v] for v in out.data_vars})
     # `P0_ref` and `P0_hist` give enough information
-    ds = ds.drop("dP0")
+    ds = ds.drop_vars("dP0")
     return ds
 
 
