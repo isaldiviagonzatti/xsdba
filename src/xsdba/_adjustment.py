@@ -78,6 +78,10 @@ def _preprocess_dataset(
     if adapt_freq_thresh:
         ds = _adapt_freq_preprocess(ds, adapt_freq_thresh, None, dim)
 
+    else:
+        dummy = xr.full_like(ds["sim"][{d: 0 for d in dim}], np.nan)
+        ds = ds.assign(P0_ref=dummy, P0_hist=dummy, pth=dummy)
+
     if rename_hist:
         ds = ds.rename({"sim": "hist"})
 
@@ -160,10 +164,16 @@ def dqm_train(
     mu_ref = ds.ref.mean(dim)
     mu_hist = ds.hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
-    out = xr.Dataset(data_vars={"af": af, "hist_q": hist_q, "scaling": scaling})
-    if adapt_freq_thresh:
-        out = out.assign(P0_ref=ds.P0_ref, P0_hist=ds.P0_hist, pth=ds.pth)
-    return out
+    return xr.Dataset(
+        data_vars={
+            "af": af,
+            "hist_q": hist_q,
+            "scaling": scaling,
+            "P0_ref": ds.P0_ref,
+            "P0_hist": ds.P0_hist,
+            "pth": ds.pth,
+        }
+    )
 
 
 @map_groups(
@@ -232,10 +242,16 @@ def eqm_train(
     hist_q = nbu.quantile(ds.hist, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
-    out = xr.Dataset(data_vars={"af": af, "hist_q": hist_q})
-    if adapt_freq_thresh:
-        out = out.assign(P0_ref=ds.P0_ref, P0_hist=ds.P0_hist, pth=ds.pth)
-    return out
+
+    return xr.Dataset(
+        data_vars={
+            "af": af,
+            "hist_q": hist_q,
+            "P0_ref": ds.P0_ref,
+            "P0_hist": ds.P0_hist,
+            "pth": ds.pth,
+        }
+    )
 
 
 def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardize):

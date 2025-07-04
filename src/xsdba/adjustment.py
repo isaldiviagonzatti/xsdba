@@ -542,6 +542,9 @@ class EmpiricalQuantileMapping(TrainAdjust):
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
+        if adapt_freq_thresh is None:
+            ds = ds.drop_vars(["P0_ref", "P0_hist", "pth"])
+
         return ds, {
             "group": group,
             "kind": kind,
@@ -650,6 +653,8 @@ class DetrendedQuantileMapping(TrainAdjust):
             jitter_over_thresh_value=jitter_over_thresh_value,
             jitter_over_thresh_upper_bnd=jitter_over_thresh_upper_bnd,
         )
+        if adapt_freq_thresh is None:
+            ds = ds.drop_vars(["P0_ref", "P0_hist", "pth"])
 
         ds.af.attrs.update(
             standard_name="Adjustment factors",
