@@ -38,11 +38,9 @@ def _adapt_freq_preprocess(
         return ds
     if (group is None) ^ (dim is None) is False:
         raise ValueError("Either `group` or `dim` must be None.")
-    if group == "time":
-        group, dim = None, group
     thresh = convert_units_to(adapt_freq_thresh, ds.sim)
     if group:
-        out = _adapt_freq(ds.isel(quantiles=0), group=group)
+        out = _adapt_freq(ds, group=group, thresh=thresh).rename({"sim_ad": "sim"})
     else:
         out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
     ds = ds.assign({v: out[v] for v in out.data_vars})
@@ -615,9 +613,13 @@ def qm_adjust(
     xr.Dataset
         The adjusted data.
     """
-    ds["sim"] = _adapt_freq_preprocess(
-        ds, adapt_freq_thresh, group=Grouper(group.name), dim=None
-    ).sim
+    if adapt_freq_thresh:
+        ds["sim"] = _adapt_freq_preprocess(
+            ds[["sim", "P0_ref", "P0_hist", "pth"]],
+            adapt_freq_thresh,
+            group=Grouper(group.name),
+            dim=None,
+        ).sim
 
     af = u.interp_on_quantiles(
         ds.sim,
@@ -677,10 +679,13 @@ def dqm_adjust(
     xr.Dataset
         The adjusted data and the trend.
     """
-    ds["sim"] = _adapt_freq_preprocess(
-        ds, adapt_freq_thresh, group=Grouper(group.name), dim=None
-    ).sim
-
+    if adapt_freq_thresh:
+        ds["sim"] = _adapt_freq_preprocess(
+            ds[["sim", "P0_ref", "P0_hist", "pth"]],
+            adapt_freq_thresh,
+            group=Grouper(group.name),
+            dim=None,
+        ).sim
     scaled_sim = u.apply_correction(
         ds.sim,
         u.broadcast(
@@ -751,9 +756,13 @@ def qdm_adjust(
     xr.Dataset
         The adjusted data.
     """
-    ds["sim"] = _adapt_freq_preprocess(
-        ds, adapt_freq_thresh, group=Grouper(group.name), dim=None
-    ).sim
+    if adapt_freq_thresh:
+        ds["sim"] = _adapt_freq_preprocess(
+            ds[["sim", "P0_ref", "P0_hist", "pth"]],
+            adapt_freq_thresh,
+            group=Grouper(group.name),
+            dim=None,
+        ).sim
 
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
     af = u.interp_on_quantiles(

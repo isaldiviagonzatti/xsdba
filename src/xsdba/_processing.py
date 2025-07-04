@@ -102,11 +102,9 @@ def _adapt_freq(
         # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed
         pth = nbu.vecquantiles(ref, P0_hist, dim).where(dP0 > 0) if pth is None else pth
-
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
         sim = ds.sim
         # Get the percentile rank of each value in sim.
-        # sim = xsdba.processing.jitter_under_thresh(sim, thresh = f"{thresh/10} {sim.units}")
         rnk = rank(sim, dim=dim, pct=True)
         # Frequency-adapted sim
         sim_ad = sim.where(
@@ -117,7 +115,7 @@ def _adapt_freq(
                 | sim.isnull(),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
                 (pth.broadcast_like(sim) - thresh)
-                * np.random.random_sample(size=sim.shape)
+                * np.random.random_sample(size=sim.shape).astype(sim.dtype)
                 + thresh,
             ),
         )
