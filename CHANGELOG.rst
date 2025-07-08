@@ -20,11 +20,13 @@ Changes
 * ``xsdba.jitter_over_thresh`` is available directly in training methods by passing the `jitter_over_thresh_value` and `jitter_over_thresh_upper_bnd`  arguments. (:pull:`110`).
 * Throw an error if `group=Grouper('5D',window)` is used with a biasadjust method other than `MBCn`.
 * ``xsdba.processing.to_additive_space`` accepts `clip_next_to_bounds`, which avoids infinities by ensuring `lower_bound < data < upper_bound`. (:issue:`164`, :pull:`165`).
+* Allow nan values in ``xsdba.measures.rmse`` and ``xsdba.measures.mae``. (:pull:`170`).
 
 Fixes
 ^^^^^
 * Fix ``xsdba.base.get_coordinates`` to avoid using a private xarray function.(:pull:`147`, :issue:`148`).
 * Fix ``xsdba.processing.from_additive_space`` to handles units correctly by using `convert_units_to` instead of `harmonize_units`. (:pull:`146`).
+* Fix the order of `clip_next_to_bounds` in ``xsdba.processing.to_additive_space``. (:pull:`169`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
