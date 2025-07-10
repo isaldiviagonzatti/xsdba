@@ -24,6 +24,7 @@ from xsdba.adjustment import (
 from xsdba.base import Grouper, stack_periods
 from xsdba.options import set_options
 from xsdba.processing import (
+    adapt_freq,
     jitter_over_thresh,
     jitter_under_thresh,
     stack_variables,
@@ -422,6 +423,29 @@ class TestDQM:
             nquantiles=50,
         )
         assert DQM.ds.sizes == {"dayofyear": 360, "quantiles": 50}
+
+    @pytest.mark.parametrize("group", ["time", "time.month"])
+    def test_adapt_freq_grouping(self, cannon_2015_rvs, random, group):
+        ref, hist, sim = cannon_2015_rvs(15000, random=random)
+
+        dqm = DetrendedQuantileMapping.train(
+            ref, hist, kind="*", group=group, adapt_freq_thresh="1 kg m-2 d-1"
+        )
+        dqm.adjust(sim)
+
+    def test_adapt_freq_time_explicit(self, cannon_2015_rvs, random):
+        ref, hist, _ = cannon_2015_rvs(15000, random=random)
+        thr = "1 kg m-2/d"
+        ref = jitter_under_thresh(ref, "0.1   kg m-2 / d")
+        hist = jitter_under_thresh(hist, "0.1 kg m-2 / d")
+        hist_ad, _, _ = adapt_freq(ref, hist, group="time", thresh=thr)
+        ADJ = DetrendedQuantileMapping.train(
+            ref, hist, kind="*", group="time", adapt_freq_thresh=thr
+        )
+        out = ADJ.adjust(hist)
+        ADJ.adapt_freq_thresh = None
+        out_ad = ADJ.adjust(hist_ad)
+        np.testing.assert_allclose(out.values, out_ad.values)
 
 
 @pytest.mark.slow
