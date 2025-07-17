@@ -5,8 +5,8 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "xsdba"
 authors = [
-  {name = "Éric Dupuis", email = "dupuis.eric@ouranos.ca"},
-  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
+  {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"},
+  {name = "Éric Dupuis", email = "dupuis.eric@ouranos.ca"}
 ]
 maintainers = [
   {name = "Éric Dupuis", email = "dupuis.eric@ouranos.ca"},
