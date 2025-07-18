@@ -23,6 +23,7 @@ Changes
 * Allow nan values in ``xsdba.measures.rmse`` and ``xsdba.measures.mae``. (:pull:`170`).
 * The adaptation of frequencies through `adapt_freq_thresh_value` is now applied in the adjusting step as well. (:pull:`160`).
 * ``xsdba.adjustment.ExtremeValues`` now accepts a DataArray for `cluster_thresh`, letting specify distinct thresholds for multiple locations. (:issue:`177`, :pull:`179`).
+* Updated minimum supported versions of `SBCK` (v1.4.2) and `numpy` (v1.25). (:pull:`180`).
 
 Fixes
 ^^^^^
@@ -35,6 +36,7 @@ Internal changes
 * The `tox` and CI configurations now support the installation of `SBCK` and `Eigen3` for testing purposes. (:pull:`139`).
 * The `coveralls` tox keyword has been renamed to `coverage` to avoid confusion with the `coveralls` service. (:pull:`139`).
 * The order of arguments in the following private functions was changed: ``xsdba._adjustment.{_fit_on_cluster,_fit_cluster_and_cdf, _extremes_train_1d}``.
+* Updated the package metadata to reflect development progress and list user :user:`aulemahal` as a primary developer (:pull:`180`).
 
 .. _changes_0.4.0:
 
