@@ -1011,7 +1011,7 @@ def _extremes_train_1d(ref, hist, ref_params, cluster_thresh, *, q_thresh, dist,
     if af.size > N:
         raise ValueError(
             "The number of precipitations part of a cluster is larger than `q_thresh`, which "
-            "indicates that `cluster_thresh` might be too small for `ref` and/or `hist`, i.e. it "
+            "likely indicates that `cluster_thresh` is too small for `ref` and/or `hist`, i.e."
             "`cluster_thresh` is still in the bulk of the distribution."
         )
     px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.nan)
