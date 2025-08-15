@@ -32,8 +32,8 @@ from .utils import _fitfunc_1d
 
 
 def _adapt_freq_preprocess(
-    ds, adapt_freq_thresh, group: Grouper | None, dim: str | None
-):
+        ds, adapt_freq_thresh, group: Grouper | None, dim
+        ):
     if adapt_freq_thresh is None:
         return ds
     if (group is None) ^ (dim is None) is False:
@@ -42,7 +42,16 @@ def _adapt_freq_preprocess(
     if group:
         out = _adapt_freq(ds, group=group, thresh=thresh).rename({"sim_ad": "sim"})
     else:
-        out = _adapt_freq.func(ds, dim=dim, thresh=thresh).rename({"sim_ad": "sim"})
+        # non-grouped: only reduce along main time axis to preserve ensemble members
+        dims = list(dim) if isinstance(dim, (list, tuple)) else [dim]
+        main = dims[0]
+
+        # dimension renaming in grouped contexts
+        if main not in ds.sim.dims and "temporal" in ds.sim.dims:
+            main = "temporal"
+
+        out = _adapt_freq.func(ds, dim=[main], thresh=thresh).rename({"sim_ad": "sim"})
+
     ds = ds.assign({v: out[v] for v in out.data_vars})
     # `P0_ref` and `P0_hist` give enough information
     ds = ds.drop_vars("dP0")
@@ -76,8 +85,9 @@ def _preprocess_dataset(
         )
 
     if adapt_freq_thresh:
-        ds = _adapt_freq_preprocess(ds, adapt_freq_thresh, None, dim)
-
+        # apply frequency adaptation along main temporal dimension only
+        main_dim = dim[0] if isinstance(dim, list) else dim
+        ds = _adapt_freq_preprocess(ds, adapt_freq_thresh, None, main_dim)
     else:
         dummy = xr.full_like(ds["sim"][{d: 0 for d in dim}], np.nan)
         ds = ds.assign(P0_ref=dummy, P0_hist=dummy, pth=dummy)
@@ -92,9 +102,9 @@ def _preprocess_dataset(
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
-    P0_ref=[Grouper.PROP],
-    P0_hist=[Grouper.PROP],
-    pth=[Grouper.PROP],
+    P0_ref=[Grouper.PROP, Grouper.ADD_DIMS],
+    P0_hist=[Grouper.PROP, Grouper.ADD_DIMS],
+    pth=[Grouper.PROP, Grouper.ADD_DIMS],
 )
 def dqm_train(
     ds: xr.Dataset,
@@ -182,9 +192,9 @@ def dqm_train(
 @map_groups(
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
-    P0_ref=[Grouper.PROP],
-    P0_hist=[Grouper.PROP],
-    pth=[Grouper.PROP],
+    P0_ref=[Grouper.PROP, Grouper.ADD_DIMS],
+    P0_hist=[Grouper.PROP, Grouper.ADD_DIMS],
+    pth=[Grouper.PROP, Grouper.ADD_DIMS],
 )
 def eqm_train(
     ds: xr.Dataset,

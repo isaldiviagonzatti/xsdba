@@ -22,10 +22,10 @@ from xsdba.utils import ADDITIVE, apply_correction, ecdf, get_correction, invert
 
 @map_groups(
     sim_ad=[Grouper.ADD_DIMS, Grouper.DIM],
-    dP0=[Grouper.PROP],
-    P0_ref=[Grouper.PROP],
-    P0_hist=[Grouper.PROP],
-    pth=[Grouper.PROP],
+    dP0=[Grouper.ADD_DIMS, Grouper.PROP],
+    P0_ref=[Grouper.ADD_DIMS, Grouper.PROP],
+    P0_hist=[Grouper.ADD_DIMS, Grouper.PROP],
+    pth=[Grouper.ADD_DIMS, Grouper.PROP],
 )
 def _adapt_freq(
     ds: xr.Dataset, *, dim: Sequence[str], thresh: float = 0, kind: str = "+"
@@ -81,19 +81,36 @@ def _adapt_freq(
         raise ValueError(
             "Either `ref` or the triplet (`P0_ref`,`P0_hist`,`pth`) must be None."
         )
-    dim = [dim] if isinstance(dim, str) else dim
-    # map_groups quirk: datasets are broadcasted and must be sliced
-    P0_ref, P0_hist, pth = (
-        da if da is None else da[{d: 0 for d in set(dim).intersection(set(da.dims))}]
-        for da in [P0_ref, P0_hist, pth]
-    )
 
+    # only reduce along specified dimensions to avoid collapsing ensemble/spatial axes
+    dim = [dim] if isinstance(dim, str) else list(dim)
+    # map_groups quirk: datasets are broadcasted and must be sliced
+
+    if reuse_adapt_output:  # only slice when using precomputed values
+        P0_ref, P0_hist, pth = (
+            da if da is None else da[{d: 0 for d in set(dim).intersection(set(da.dims))}]
+            for da in [P0_ref, P0_hist, pth]
+        )
+
+    red_sim = [d for d in dim if d in ds.sim.dims]
+
+    # compute frequencies only along intended dimensions
+    red_ref = [d for d in red_sim if ref is not None and d in ref.dims] if ref is not None else red_sim
+    
     # Compute the probability of finding a value <= thresh
     # This is the "dry-day frequency" in the precipitation case
-    P0_sim = ecdf(ds.sim, thresh, dim=dim)
+    P0_sim = ecdf(ds.sim, thresh, dim=red_sim)
     P0_hist = P0_sim if P0_hist is None else P0_hist
-    P0_ref = ecdf(ref, thresh, dim=dim) if P0_ref is None else P0_ref
+    P0_ref = ecdf(ref, thresh, dim=red_ref) if P0_ref is None else P0_ref
+
+    # broadcast P0_ref to match P0_hist dimensions if needed
+    if ref is not None:
+        extra_dims_in_hist = [d for d in P0_hist.dims if d not in P0_ref.dims]
+        if extra_dims_in_hist:
+            P0_ref = P0_ref.broadcast_like(P0_hist)
+
     dP0 = (P0_hist - P0_ref) / P0_hist
+
     if dP0.isnull().all():
         pth = dP0.copy()
         sim_ad = ds.sim.copy()
@@ -101,16 +118,29 @@ def _adapt_freq(
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
         # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed
-        pth = nbu.vecquantiles(ref, P0_hist, dim).where(dP0 > 0) if pth is None else pth
-        # Probabilities and quantiles computed within all dims, but correction along the first one only.
+        if pth is None:
+            extra_dims = [d for d in P0_hist.dims if d not in ref.dims]
+            if extra_dims:
+                # broadcast reference to match P0_hist for threshold computation
+                ref_for_pth = ref.broadcast_like(P0_hist)
+            else:
+                #  original case
+                ref_for_pth = ref
+            pth = nbu.vecquantiles(ref_for_pth, P0_hist, red_ref).where(dP0 > 0)
+
         sim = ds.sim
         # Get the percentile rank of each value in sim.
-        rnk = rank(sim, dim=dim, pct=True)
-        # Frequency-adapted sim
+        rnk = rank(sim, dim=red_sim, pct=True)
+
+        # Broadcast frequency stats to match simulation shape
+        P0_ref_corr = P0_ref.broadcast_like(P0_sim)
+        P0_hist_corr = P0_hist.broadcast_like(P0_sim)
+
+
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
             sim.where(
-                (rnk < (P0_ref / P0_hist) * P0_sim)
+                (rnk < (P0_ref_corr / P0_hist_corr) * P0_sim)
                 | (rnk > P0_sim)
                 | sim.isnull(),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
@@ -123,10 +153,8 @@ def _adapt_freq(
     # Tell group_apply that these will need reshaping (regrouping)
     # This is needed since if any variable comes out a `groupby` with the original group axis,
     # the whole output is broadcasted back to the original dims.
-    pth.attrs["_group_apply_reshape"] = True
-    dP0.attrs["_group_apply_reshape"] = True
-    P0_ref.attrs["_group_apply_reshape"] = True
-    P0_hist.attrs["_group_apply_reshape"] = True
+    for v in ("pth", "dP0", "P0_ref", "P0_hist"):
+        locals()[v].attrs["_group_apply_reshape"] = True
 
     return xr.Dataset(
         data_vars={
